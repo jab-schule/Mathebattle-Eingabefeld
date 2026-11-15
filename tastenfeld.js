@@ -137,6 +137,58 @@ st.textContent=
 '';
 D.head.appendChild(st);
 
+/* ---------- Tablet-Ansicht: Mathebattle an die Bildschirmbreite anpassen ---------- */
+var TAB='html.mbk-tab ';
+var st2=D.createElement('style'); st2.setAttribute('data-mbk','1');
+st2.textContent=[
+ TAB+'body{font-size:100%;-webkit-text-size-adjust:100%}',
+ TAB+'#page_whole_width{background-size:auto 104px}',
+ TAB+'#page{width:auto;max-width:1000px;padding:0 max(12px,env(safe-area-inset-right)) 0 max(12px,env(safe-area-inset-left));box-sizing:border-box}',
+ TAB+'#header{height:104px}',
+ TAB+'#header_col1{width:auto;margin:0;float:none}',
+ TAB+'#header_col1 img{height:58px;width:auto;margin-top:4px}',
+ TAB+'#header_col2,'+TAB+'#header_col3{display:none}',
+ TAB+'#menu_div{position:absolute;top:66px;left:0;right:0;font-size:15px;overflow-x:auto;-webkit-overflow-scrolling:touch}',
+ TAB+'#menu{width:auto;margin:0;padding:0;display:flex;white-space:nowrap}',
+ TAB+'#menu>li{float:none;height:36px}',
+ TAB+'#menu li a{padding:9px 10px 2px 6px}',
+ TAB+'#menu ul{width:auto;max-width:96vw}',
+ TAB+'#login_top{top:8px;right:12px;width:auto;font-size:.95em;text-align:right}',
+ TAB+'#login_top .log_status{display:none}',
+ TAB+'#content{display:flex;flex-direction:column;padding:12px 0 32px;overflow:visible}',
+ TAB+'#content>*{order:3}',
+ TAB+'#aufgabe{order:1;margin-left:0;min-height:0}',
+ TAB+'.mbk-hs{order:2}',
+ TAB+'#highscore{order:2;float:none;width:auto;border:0;border-top:1.5px solid #ddd;padding-top:12px;font-size:.95em}',
+ TAB+'#highscore:not(.mbk-open){display:none}',
+ TAB+'#highscore>div{width:auto!important;margin:0!important}',
+ TAB+'#aufgabe h2{font-size:1.25em;margin:0 0 8px}',
+ TAB+'.exercise_question{font-size:1.25em;line-height:1.6}',
+ TAB+'.exercise_form{margin-top:16px}',
+ TAB+'.exercise_form table,'+TAB+'.radio_form,'+TAB+'.value_exerc_form,'+TAB+'#content_choose{width:auto;max-width:100%}',
+ TAB+'#term_input{width:100%!important;max-width:520px;box-sizing:border-box;font-size:18px;padding:8px 10px;border:1.5px solid #bbb;border-radius:8px}',
+ TAB+'.term_form #control{position:static!important;width:auto!important;max-width:520px;margin:12px auto!important;border-radius:10px;border-width:1.5px}',
+ 'html.mbk-tab.mbk-kp .term_form p.comment{display:none}',
+ TAB+'form div.submit input[type=submit],'+TAB+'.bluebuttons a{font-size:17px;padding:10px 18px;border-radius:8px}',
+ TAB+'#all_stats table,'+TAB+'#content table{display:block;max-width:100%;overflow-x:auto}',
+ TAB+'#content img{max-width:100%;height:auto}',
+ TAB+'.mbk-hs{align-self:flex-start;margin:16px 0 8px;border:1.5px solid #ccc;background:#fff;color:#25395E;border-radius:10px;padding:10px 14px;font:600 15px -apple-system,system-ui,sans-serif;cursor:pointer}'
+].join('\n');
+D.head.appendChild(st2);
+function tablet(){
+  var vp=D.querySelector('meta[name=viewport]');
+  if(!vp){ vp=D.createElement('meta'); vp.name='viewport'; vp.setAttribute('data-mbk','1'); D.head.appendChild(vp); }
+  vp.content='width=device-width,initial-scale=1,viewport-fit=cover';
+  D.documentElement.classList.add('mbk-tab');
+  var hs=D.getElementById('highscore');
+  if(hs && !D.querySelector('.mbk-hs')){
+    var b=D.createElement('button'); b.type='button'; b.className='mbk-hs'; b.textContent='Statistik und Highscore anzeigen';
+    b.addEventListener('click',function(){ var o=hs.classList.toggle('mbk-open'); b.textContent=o?'Statistik und Highscore ausblenden':'Statistik und Highscore anzeigen'; });
+    hs.parentNode.insertBefore(b, hs);
+  }
+}
+tablet();
+
 var K=[
  ['7','c','7'],['8','c','8'],['9','c','9'],['+','c','+'],['−','c','-'],['⌫','back','','n'],
  ['4','c','4'],['5','c','5'],['6','c','6'],['·','c','\\cdot'],['( )','paren',''],['←','left','','n'],
@@ -178,7 +230,7 @@ var spacer=D.createElement('div'); D.body.appendChild(spacer);
 /* Das Tastenfeld liegt immer am unteren Rand des sichtbaren Ausschnitts und behält seine Größe,
    egal wie stark Safari die Seite verkleinert oder wie weit man hineinzoomt. */
 var fitQueued=false;
-function pad(){ fit(); }
+function pad(){ D.documentElement.classList.toggle('mbk-kp', !P.hidden); fit(); }
 function fit(){
   var vv=W.visualViewport, s=(vv&&vv.scale)||1, w=vv?vv.width:W.innerWidth, h=vv?vv.height:W.innerHeight,
       ox=vv?vv.offsetLeft:0, oy=vv?vv.offsetTop:0, k=1/s;
@@ -606,6 +658,7 @@ function swap(html){
   try{ if(W.MathJax && MathJax.typesetPromise){ if(MathJax.startup && MathJax.startup.document) MathJax.startup.document.clear(); MathJax.typesetPromise().then(function(){ label(); }); } }catch(e){}
 }
 function attach(){
+  tablet();
   inp=D.getElementById('term_input'); TASK=null;
   msg('');
   if(!inp){ P.hidden=true; OPEN.hidden=true; pad(); return; }
