@@ -375,7 +375,7 @@ function simp(n){
   return r;
 }
 var HINTS={
-  multiply:'Richtig abgeleitet. Rechne jetzt noch die Zahlen aus.',
+  multiply:'Richtig abgeleitet. Rechne jetzt noch die Produkte aus.',
   reduce:'Richtig abgeleitet. Kürze noch den Bruch.',
   neutral:'Richtig abgeleitet. Lass Faktoren 1, Summanden 0 und Hochzahlen 1 weg.',
   combinePow:'Richtig abgeleitet. Fasse gleiche Faktoren zu einer Potenz zusammen.',
