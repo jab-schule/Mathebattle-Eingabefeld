@@ -142,20 +142,13 @@ var TAB='html.mbk-tab ';
 var st2=D.createElement('style'); st2.setAttribute('data-mbk','1');
 st2.textContent=[
  TAB+'body{font-size:100%;-webkit-text-size-adjust:100%}',
- TAB+'#page_whole_width{background-size:auto 104px}',
+ TAB+'#page_whole_width{background-size:auto calc((min(100vw,1000px) - 24px) * .187)}',
  TAB+'#page{width:auto;max-width:1000px;padding:0 max(12px,env(safe-area-inset-right)) 0 max(12px,env(safe-area-inset-left));box-sizing:border-box}',
- TAB+'#header{height:104px}',
- TAB+'#header_col1{width:auto;margin:0;float:none}',
- TAB+'#header_col1 img{height:58px;width:auto;margin-top:4px}',
- '@media (max-width:600px){'+TAB+'#header_col1 img{height:auto;width:calc(100vw - 150px);max-width:none;margin-top:10px}}',
- TAB+'#header_col2,'+TAB+'#header_col3{display:none}',
- TAB+'#menu_div{position:absolute;top:66px;left:0;right:0;font-size:15px;overflow-x:auto;-webkit-overflow-scrolling:touch}',
- TAB+'#menu{width:auto;margin:0;padding:0;display:flex;white-space:nowrap}',
- TAB+'#menu>li{float:none;height:36px}',
- TAB+'#menu li a{padding:9px 10px 2px 6px}',
- TAB+'#menu ul{width:auto;max-width:96vw}',
- TAB+'#login_top{top:8px;right:12px;width:auto;font-size:.95em;text-align:right}',
- TAB+'#login_top .log_status{display:none}',
+ TAB+'#header_col1{width:100%;margin:0;float:none}',
+ TAB+'#header_col1 img{display:block;width:100%;max-width:1000px;height:auto}',
+ TAB+'#menu_div{display:none}',
+ TAB+'#login_top{top:calc((min(100vw,1000px) - 24px) * .128)}',
+ '@media (max-width:600px){'+TAB+'#login_top{font-size:.85em;top:calc((100vw - 24px) * .11)}'+TAB+'#login_top .log_status{display:none}}',
  TAB+'#content{display:flex;flex-direction:column;padding:0 0 12px;overflow:visible;min-height:0}',
  TAB+'#content>*{order:3}',
  TAB+'#aufgabe{order:1;margin-left:0;min-height:0;padding-top:48px}',
@@ -186,7 +179,7 @@ st2.textContent=[
  TAB+'form div.submit input[type=submit],'+TAB+'.bluebuttons a{font-size:17px;padding:10px 18px;border-radius:8px}',
  TAB+'#all_stats table,'+TAB+'#content table{display:block;max-width:100%;overflow-x:auto}',
  TAB+'#content img{max-width:100%;height:auto}',
- TAB+'.mbk-hs{position:fixed;right:0;top:calc(116px + env(safe-area-inset-top));z-index:2147482999;writing-mode:vertical-rl;transform:rotate(180deg);border:1.5px solid #ccc;border-left:0;background:#fff;color:#25395E;border-radius:0 10px 10px 0;padding:14px 8px;font:600 15px -apple-system,system-ui,sans-serif;cursor:pointer;box-shadow:2px 0 10px rgba(0,0,0,.08)}'
+ TAB+'.mbk-hs{position:fixed;right:0;top:calc((min(100vw,1000px) - 24px) * .187 + 16px);z-index:2147482999;writing-mode:vertical-rl;transform:rotate(180deg);border:1.5px solid #ccc;border-left:0;background:#fff;color:#25395E;border-radius:0 10px 10px 0;padding:14px 8px;font:600 15px -apple-system,system-ui,sans-serif;cursor:pointer;box-shadow:2px 0 10px rgba(0,0,0,.08)}'
 ].join('\n');
 D.head.appendChild(st2);
 function tablet(){
