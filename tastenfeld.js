@@ -125,6 +125,7 @@ st.textContent=
 '#mbk.land{padding-top:6px;padding-bottom:calc(6px + env(safe-area-inset-bottom))}'+
 '#mbk .mbk-msg.err{color:#C2410C}'+
 '#mbk .mbk-msg.hint{color:#2F55D4}'+
+'#mbk .mbk-m{font:1.25em "Times New Roman",Georgia,serif;white-space:nowrap;color:#16181D}'+
 '#mbk .mbk-k{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}'+
 '#mbk .mbk-k button{height:44px;border:0;border-radius:10px;background:#F3F4F6;color:#16181D;font:500 18px -apple-system,system-ui,sans-serif;cursor:pointer;touch-action:manipulation;padding:0}'+
 '#mbk .mbk-k button:active{background:#E3E5E9}'+
@@ -204,7 +205,7 @@ function sync(now){
   var run=function(){ try{ if(typeof W.term_check==='function') W.term_check(VAR,{keyCode:0}); }catch(e){} };
   if(now) run(); else timer=setTimeout(run,300);
 }
-function msg(t,kind){ MSG.textContent=t||''; MSG.className='mbk-msg'+(kind==='hint'?' hint':kind?' err':''); pad(); }
+function msg(t,kind,isHtml){ if(isHtml) MSG.innerHTML=t||''; else MSG.textContent=t||''; MSG.className='mbk-msg'+(kind==='hint'?' hint':kind?' err':''); pad(); }
 function render(){ OUT.innerHTML=html(root,true)||'<span class="mbk-c"></span>'; pad(); }
 
 /* ================= Prüfung bei Ableitungsaufgaben =================
@@ -336,35 +337,35 @@ function isE(n){ return n.t==='pow' && n.b.t==='con' && n.b.v==='e' || n.t==='fn
 function eExp(n){ return n.t==='pow' ? n.e : n.a; }
 function simp(n){
   var r='';
-  function bad(x){ if(!r) r=x; }
+  function bad(x,node){ if(!r) r={k:x, n:node}; }
   (function walk(m){
     if(r) return;
-    if(!hasVar(m) && !hasCon(m) && !numLit(m) && m.t!=='fn'){ bad(hasAdd(m) ? 'sum' : 'multiply'); return; }
+    if(!hasVar(m) && !hasCon(m) && !numLit(m) && m.t!=='fn'){ bad('number', m); return; }
     switch(m.t){
       case 'num': return;
       case 'div':
         if(isInt(m.a)&&isInt(m.b)){ if(m.b.v===1 || gcd(m.a.v,m.b.v)>1 || m.a.v===0) bad('reduce'); return; }
         if(m.b.t==='num' && m.b.v===1) bad('neutral');
         walk(m.a); walk(m.b); return;
-      case 'neg': if(m.a.t==='neg') bad('multiply'); walk(m.a); return;
+      case 'neg': if(m.a.t==='neg') bad('signs'); walk(m.a); return;
       case 'pow':
         if(m.e.t==='num' && (m.e.v===1||m.e.v===0)) bad('neutral');
         walk(m.b); walk(m.e); return;
       case 'fn': walk(m.a); return;
       case 'mul': {
         var F=flatFactors(m).fs, nums=F.filter(numLit);
-        if(nums.length>1) bad('multiply');
+        if(nums.length>1) bad('number', {t:'mul', fs:nums});
         if(nums.some(function(q){ return q.t==='num' && (q.v===1||q.v===0); })) bad('neutral');
         var bases={};
         F.forEach(function(q){ if(numLit(q)) return; var b=isE(q)?'e':fp(q.t==='pow'?q.b:q); if(bases[b]) bad('combinePow'); bases[b]=1; });
         F.forEach(walk); return; }
       case 'add': {
-        var keys={}, eKeys={};
+        var keys={}, eKeys={}, consts=m.items.filter(function(it){ return !hasVar(it.n) && !hasCon(it.n); });
         m.items.forEach(function(it){
           var n0=it.n, F=flatFactors(n0).fs, rest=F.filter(function(q){ return !numLit(q); });
           if(n0.t==='num' && n0.v===0) bad('neutral');
           var key=rest.length ? fp(rest.length===1?rest[0]:{t:'mul',fs:rest}) : 'C';
-          if(keys[key]) bad(key==='C' ? 'sum' : 'combine'); keys[key]=1;
+          if(keys[key]){ if(key==='C') bad('number', {t:'add', items:consts}); else bad('combine'); } keys[key]=1;
           var seen={};
           rest.forEach(function(q){ if(isE(q)){ var k=fp(eExp(q)); if(!seen[k]){ seen[k]=1; eKeys[k]=(eKeys[k]||0)+1; } } });
           walk(n0);
@@ -375,9 +376,32 @@ function simp(n){
   })(n);
   return r;
 }
+/* Teilterm als Formel für den Hinweis */
+function astHtml(n){
+  function wrap(m){ return '('+astHtml(m)+')'; }
+  function needsParen(m){ return m.t==='add' || m.t==='neg'; }
+  switch(n.t){
+    case 'num': return String(n.s||n.v).replace('.',',');
+    case 'var': return '<i>'+VAR+'</i>';
+    case 'con': return n.v==='e' ? '<i>e</i>' : 'π';
+    case 'neg': return '−'+(needsParen(n.a)?wrap(n.a):astHtml(n.a));
+    case 'add': return n.items.map(function(it,i){ var h=needsParen(it.n)&&it.n.t==='neg'?wrap(it.n):astHtml(it.n); return (it.s<0 ? (i?' − ':'−') : (i?' + ':''))+h; }).join('');
+    case 'mul': return n.fs.map(function(f,i){
+        var h=needsParen(f)?wrap(f):astHtml(f), prev=n.fs[i-1];
+        var dot=i>0 && (numLit(f) || f.t==='div' || numLit(prev) && f.t==='num');
+        return (dot?'<span class="mbk-op">·</span>':'')+h; }).join('');
+    case 'div': return '<span class="mbk-fr"><span>'+astHtml(n.a)+'</span><span>'+astHtml(n.b)+'</span></span>';
+    case 'pow': return ((n.b.t==='var'||n.b.t==='con'||n.b.t==='num')?astHtml(n.b):wrap(n.b))+'<sup>'+astHtml(n.e)+'</sup>';
+    case 'fn': return n.f==='wu'||n.f==='sqrt' ? '√<span class="mbk-rt">'+astHtml(n.a)+'</span>' : n.f+'('+astHtml(n.a)+')';
+  }
+  return '';
+}
+function hintHtml(s){
+  if(s.k==='number') return 'Richtig abgeleitet. Fasse <span class="mbk-m">'+astHtml(s.n)+'</span> noch zu einer Zahl zusammen.';
+  return HINTS[s.k];
+}
 var HINTS={
-  multiply:'Richtig abgeleitet. Rechne jetzt noch die Produkte aus.',
-  sum:'Richtig abgeleitet. Rechne jetzt noch die Summen aus.',
+  signs:'Richtig abgeleitet. Fasse die Minuszeichen noch zusammen.',
   reduce:'Richtig abgeleitet. Kürze noch den Bruch.',
   neutral:'Richtig abgeleitet. Lass Faktoren 1, Summanden 0 und Hochzahlen 1 weg.',
   combinePow:'Richtig abgeleitet. Fasse gleiche Faktoren zu einer Potenz zusammen.',
@@ -486,7 +510,7 @@ function guard(){
   var f=currentTask(); if(!f) return true;
   var g; try{ g=parseExpr(inp.value, VAR); }catch(e){ return true; }
   var res=judge(f,g);
-  if(res.kind==='ok'){ var s=simp(g); if(s){ msg(HINTS[s],'hint'); return false; } return true; }
+  if(res.kind==='ok'){ var s=simp(g); if(s){ msg(hintHtml(s),'hint',true); return false; } return true; }
   if(res.kind!=='wrong') return true;
   var n=getTries();
   if(n>=MAX_TRIES-1) return true;
@@ -640,6 +664,6 @@ D.addEventListener('keydown',function(e){
   e.preventDefault(); e.stopPropagation(); act(a,v);
 },true);
 
-W.__mbk={toggle:toggle, _t:{parseExpr:parseExpr, judge:judge, simp:simp, taskF:function(){ return taskF(); }, task:function(){ return currentTask(); }}};
+W.__mbk={toggle:toggle, _t:{parseExpr:parseExpr, judge:judge, simp:simp, hint:function(s){ return hintHtml(s); }, taskF:function(){ return taskF(); }, task:function(){ return currentTask(); }}};
 render(); fit(); label(); hookAll();
 })();
