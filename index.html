@@ -16,7 +16,7 @@
 :root[data-theme="dark"]{ color-scheme:dark; --bg:#111317; --ink:#ECEEF2; --muted:#9AA1AD; --line:#272B32; --soft:#1B1E24; --accent:#8AA5FF; --ok:#3BBF73; --on-ink:#111317; }
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15.5px;line-height:1.55;
-  padding-block:28px 380px;padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
+  padding-block:28px 40px;padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
 main{max-width:620px;margin:0 auto;display:flex;flex-direction:column;gap:28px}
 h1{margin:0;font-size:22px;font-weight:600;letter-spacing:-.01em;text-wrap:balance}
 h2{margin:0;font-size:17px;font-weight:600}
@@ -45,21 +45,7 @@ button:focus-visible,a:focus-visible,textarea:focus-visible{outline:2px solid va
 <main>
   <div style="display:flex;flex-direction:column;gap:8px">
     <h1>Mathebattle-Tastenfeld</h1>
-    <p class="lead">Ein Lesezeichen, das auf einer Mathebattle-Aufgabe ein Tastenfeld mit Brüchen, Hochzahlen und e-Funktionen einblendet. Der Term wird beim Tippen ins Mathebattle-Feld übertragen, die Vorschau und das Abschicken laufen wie gewohnt über Mathebattle.</p>
-    <p class="lead">Bei Aufgaben, in denen abgeleitet werden soll, gibt es drei Versuche: Eine falsche Antwort wird vorher abgefangen, erst der dritte Versuch geht ungeprüft an Mathebattle. Ist die Ableitung richtig, aber noch nicht vereinfacht, gibt es einen Hinweis, ohne dass ein Versuch verloren geht.</p>
   </div>
-
-  <section>
-    <h2>Ausprobieren</h2>
-    <div class="demo">
-      <p class="q">Berechne die Ableitung von f mit f(x) = 2e<sup>3x</sup> und vereinfache:</p>
-      <div class="field">f'(x)=<input type="text" id="term_input" onkeyup="term_check(&quot;x&quot;,event);" aria-label="Eingabefeld wie bei Mathebattle"></div>
-      <div class="out" id="as_function" aria-live="polite"></div>
-      <span id="bloesen"></span>
-      <button type="button" class="btn primary" id="tryBtn">Tastenfeld öffnen</button>
-    </div>
-    <p class="note">Das Feld hier verhält sich wie das Eingabefeld von Mathebattle. Darunter siehst du, welcher Text bei Mathebattle ankommen würde.</p>
-  </section>
 
   <section>
     <h2>Auf dem iPad oder iPhone einrichten</h2>
@@ -98,19 +84,6 @@ document.getElementById('copyBtn').addEventListener('click', function(){
   var fallback=function(){ ta.focus(); ta.select(); alertless('Der Code ist markiert. Kopiere ihn über das Menü oder mit Strg+C.'); };
   try{ navigator.clipboard.writeText(BM_URL).then(function(){ alertless('Code kopiert.'); }, fallback); }catch(e){ fallback(); }
 });
-/* Nachbau der Mathebattle-Funktionen für das Testfeld */
-function term_check(x, ev){
-  var v=document.getElementById('term_input').value, o=document.getElementById('as_function');
-  o.className='out';
-  o.innerHTML = v ? 'Bei Mathebattle käme an: <code></code>' : '';
-  if(v) o.querySelector('code').textContent=v;
-}
-function form_submit(){
-  var o=document.getElementById('as_function'), v=document.getElementById('term_input').value;
-  o.className='out sent'; o.textContent='Abgeschickt: '+v;
-}
-function runBookmarklet(){ if(window.__mbk){ window.__mbk.toggle(); return; } var sc=document.createElement('script'); sc.src='tastenfeld.js?v='+Date.now(); document.body.appendChild(sc); }
-document.getElementById('tryBtn').addEventListener('click', runBookmarklet);
 </script>
 
 </body>
