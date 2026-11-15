@@ -161,9 +161,8 @@ st2.textContent=[
  TAB+'.mbk-hs-close{display:block;margin:0 0 12px auto;border:0;background:none;color:#25395E;text-decoration:underline;font:15px -apple-system,system-ui,sans-serif;cursor:pointer;padding:4px}',
 '@media (prefers-reduced-motion:reduce){'+TAB+'#highscore{transition:none}}',
  TAB+'#aufgabe h2{font-size:1.25em;margin:0 0 8px}',
- TAB+'.exercise_question{font-size:1.25em;line-height:1.6}',
+ TAB+'.exercise_question{font-size:1.05em;line-height:1.6}',
  TAB+'.exercise_question br{display:none}',
- '@media (max-width:600px){'+TAB+'.exercise_question{font-size:1.05em}}',
  TAB+'.exercise_form{margin-top:24px;text-align:left}',
  TAB+'.exercise_form>p.comment{margin:0 0 34px;padding:0;text-align:left;font-size:1em}',
  TAB+'.exercise_form>p.comment>br:first-child{display:none}',
@@ -250,21 +249,20 @@ st3.textContent=[
  MOD+'.mbk-bar{font-family:'+SANS+'}',
  MOD+'.mbk-bar b{font-size:20px;font-weight:700;letter-spacing:-.01em}',
  MOD+'.mbk-bar span{font-size:13.5px}',
- MOD+'#aufgabe h2{font:600 15px/1.3 '+SANS+';color:#5b6472;letter-spacing:.01em;margin:0 0 10px}',
- MOD+'.exercise_question{font-size:22px;line-height:1.45;color:#16181d;font-weight:400;letter-spacing:-.005em}',
+ MOD+'#aufgabe h2{font:600 14px/1.3 '+SANS+';color:#5b6472;letter-spacing:.01em;margin:0 0 10px}',
+ MOD+'.exercise_question{font-size:18px;line-height:1.5;color:#16181d;font-weight:400;letter-spacing:-.005em}',
  MOD+'.term_form{font:500 18px '+SANS+';color:#5b6472}',
  MOD+'#term_input{font:17px '+MONO+';color:#16181d;background:#f6f7f9;border:1.5px solid #d5d9e0;border-radius:10px;padding:10px 12px}',
  MOD+'.term_form div.submit input[type=submit]{font:600 17px '+SANS+';letter-spacing:.01em;border-radius:10px;padding:11px 20px}',
  MOD+'.term_form #control{background:#f3f4f6;border:1.5px solid #e1e4e9;border-radius:12px}',
  MOD+'.term_form #control p{font:14.5px '+SANS+';color:#5b6472}',
- MOD+'#as_function{font:600 21px/1.35 '+SANS+';color:#16181d}',
+ MOD+'#as_function{font:600 18px/1.35 '+SANS+';color:#16181d}',
  MOD+'.exercise_form>p.comment a{font:500 15.5px/1.45 '+SANS+';font-style:normal;color:#b8620a}',
  MOD+'#highscore,'+MOD+'#highscore td,'+MOD+'#highscore h3,'+MOD+'#highscore h4{font-family:'+SANS+'}',
  MOD+'#highscore{font-size:15px}',
  MOD+'#highscore h3{font-size:17px;font-weight:600}',
  MOD+'#highscore h4{font-size:16px;font-weight:600}',
- MOD+'.mbk-hs,'+MOD+'.mbk-hs-close{font-family:'+SANS+'}',
- '@media (max-width:600px){'+MOD+'.exercise_question{font-size:18px;line-height:1.5}'+MOD+'#aufgabe h2{font-size:14px}'+MOD+'#as_function{font-size:18px}}'
+ MOD+'.mbk-hs,'+MOD+'.mbk-hs-close{font-family:'+SANS+'}'
 ].join('\n');
 D.head.appendChild(st3);
 
