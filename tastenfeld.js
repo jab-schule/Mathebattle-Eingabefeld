@@ -158,21 +158,28 @@ st2.textContent=[
  TAB+'#content{display:flex;flex-direction:column;padding:12px 0 32px;overflow:visible}',
  TAB+'#content>*{order:3}',
  TAB+'#aufgabe{order:1;margin-left:0;min-height:0}',
- TAB+'.mbk-hs{order:2}',
- TAB+'#highscore{order:2;float:none;width:auto;border:0;border-top:1.5px solid #ddd;padding-top:12px;font-size:.95em}',
- TAB+'#highscore:not(.mbk-open){display:none}',
+ TAB+'#highscore{position:fixed;top:0;right:0;bottom:0;float:none;width:min(320px,86vw);height:auto;box-sizing:border-box;background:#fff;border:0;border-left:1.5px solid #ddd;box-shadow:-8px 0 24px rgba(0,0,0,.12);overflow-y:auto;-webkit-overflow-scrolling:touch;padding:calc(12px + env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) 16px;font-size:.95em;transform:translateX(105%);transition:transform .25s ease;z-index:2147483001}',
+ TAB+'#highscore.mbk-open{transform:none}',
  TAB+'#highscore>div{width:auto!important;margin:0!important}',
+ TAB+'.mbk-hs-close{display:block;margin:0 0 12px auto;border:0;background:none;color:#25395E;text-decoration:underline;font:15px -apple-system,system-ui,sans-serif;cursor:pointer;padding:4px}',
+'@media (prefers-reduced-motion:reduce){'+TAB+'#highscore{transition:none}}',
  TAB+'#aufgabe h2{font-size:1.25em;margin:0 0 8px}',
  TAB+'.exercise_question{font-size:1.25em;line-height:1.6}',
- TAB+'.exercise_form{margin-top:16px}',
+ TAB+'.exercise_question br{display:none}',
+ TAB+'.exercise_form{margin-top:6px}',
  TAB+'.exercise_form table,'+TAB+'.radio_form,'+TAB+'.value_exerc_form,'+TAB+'#content_choose{width:auto;max-width:100%}',
- TAB+'#term_input{width:100%!important;max-width:520px;box-sizing:border-box;font-size:18px;padding:8px 10px;border:1.5px solid #bbb;border-radius:8px}',
- TAB+'.term_form #control{position:static!important;width:auto!important;max-width:520px;margin:12px auto!important;border-radius:10px;border-width:1.5px}',
+ TAB+'#term_input{width:calc(100% - 170px)!important;max-width:460px;box-sizing:border-box;font-size:18px;padding:8px 10px;border:1.5px solid #bbb;border-radius:8px;vertical-align:middle}',
+ TAB+'.term_form div.submit{display:inline-block;margin:0 0 0 8px;padding:0;vertical-align:middle;clear:none;float:none}',
+ TAB+'.term_form div.submit input[type=submit]{margin:0}',
+ TAB+'#loesen,'+TAB+'#bloesen{display:none!important}',
+ TAB+'.term_form #control br{display:none}',
+ TAB+'.term_form #control p{margin:0 0 4px}',
+ TAB+'.term_form #control{position:static!important;width:auto!important;max-width:520px;margin:10px auto!important;padding:10px 15px;border-radius:10px;border-width:1.5px}',
  'html.mbk-tab.mbk-kp .term_form p.comment{display:none}',
  TAB+'form div.submit input[type=submit],'+TAB+'.bluebuttons a{font-size:17px;padding:10px 18px;border-radius:8px}',
  TAB+'#all_stats table,'+TAB+'#content table{display:block;max-width:100%;overflow-x:auto}',
  TAB+'#content img{max-width:100%;height:auto}',
- TAB+'.mbk-hs{align-self:flex-start;margin:16px 0 8px;border:1.5px solid #ccc;background:#fff;color:#25395E;border-radius:10px;padding:10px 14px;font:600 15px -apple-system,system-ui,sans-serif;cursor:pointer}'
+ TAB+'.mbk-hs{position:fixed;right:0;top:calc(116px + env(safe-area-inset-top));z-index:2147482999;writing-mode:vertical-rl;transform:rotate(180deg);border:1.5px solid #ccc;border-left:0;background:#fff;color:#25395E;border-radius:0 10px 10px 0;padding:14px 8px;font:600 15px -apple-system,system-ui,sans-serif;cursor:pointer;box-shadow:2px 0 10px rgba(0,0,0,.08)}'
 ].join('\n');
 D.head.appendChild(st2);
 function tablet(){
@@ -181,11 +188,18 @@ function tablet(){
   vp.content='width=device-width,initial-scale=1,viewport-fit=cover';
   D.documentElement.classList.add('mbk-tab');
   var hs=D.getElementById('highscore');
-  if(hs && !D.querySelector('.mbk-hs')){
-    var b=D.createElement('button'); b.type='button'; b.className='mbk-hs'; b.textContent='Statistik und Highscore anzeigen';
-    b.addEventListener('click',function(){ var o=hs.classList.toggle('mbk-open'); b.textContent=o?'Statistik und Highscore ausblenden':'Statistik und Highscore anzeigen'; });
+  if(hs && !hs.querySelector('.mbk-hs-close')){
+    var old=D.querySelector('.mbk-hs'); if(old) old.remove();
+    var b=D.createElement('button'); b.type='button'; b.className='mbk-hs'; b.textContent='Statistik';
+    b.addEventListener('click',function(){ hs.classList.toggle('mbk-open'); });
     hs.parentNode.insertBefore(b, hs);
+    var c=D.createElement('button'); c.type='button'; c.className='mbk-hs-close'; c.textContent='Schließen';
+    c.addEventListener('click',function(){ hs.classList.remove('mbk-open'); });
+    hs.insertBefore(c, hs.firstChild);
   }
+  /* blauen Lösen-Button rechts neben das Eingabefeld */
+  var ti=D.getElementById('term_input'), sub=ti && ti.form && ti.form.querySelector('div.submit');
+  if(ti && sub && ti.nextElementSibling!==sub) ti.parentNode.insertBefore(sub, ti.nextSibling);
 }
 tablet();
 
@@ -582,7 +596,7 @@ function go(){
     var busy=W.jQuery && W.jQuery.active>0;
     if(busy && Date.now()-t0<4000){ setTimeout(wait,120); return; }
     var af=D.getElementById('as_function'), bl=D.getElementById('bloesen');
-    var bad=!af || /Fehler/.test(af.textContent) || (af.innerHTML.indexOf('FF0000')>=0) || (bl && getComputedStyle(bl).display==='none');
+    var bad=!af || /Fehler/.test(af.textContent) || (af.innerHTML.indexOf('FF0000')>=0);
     if(bad){ msg('Mathebattle kann den Term so nicht lesen. Prüfe Klammern und Rechenzeichen.',true); return; }
     msg('');
     if(guard()) realSubmit();
