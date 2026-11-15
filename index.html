@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Mathebattle-Tastenfeld</title>
+<style>
+/* Eine ruhige Anleitung: Testfeld oben, Einrichtung in nummerierten Schritten, Code am Ende */
+:root{
+  --bg:#FFFFFF; --ink:#16181D; --muted:#6B717C; --line:#E5E7EB; --soft:#F3F4F6; --accent:#2F55D4; --ok:#22A05A; --on-ink:#FFFFFF;
+  --font:system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){ color-scheme:dark; --bg:#111317; --ink:#ECEEF2; --muted:#9AA1AD; --line:#272B32; --soft:#1B1E24; --accent:#8AA5FF; --ok:#3BBF73; --on-ink:#111317; }
+}
+:root[data-theme="dark"]{ color-scheme:dark; --bg:#111317; --ink:#ECEEF2; --muted:#9AA1AD; --line:#272B32; --soft:#1B1E24; --accent:#8AA5FF; --ok:#3BBF73; --on-ink:#111317; }
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15.5px;line-height:1.55;
+  padding-block:28px 380px;padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
+main{max-width:620px;margin:0 auto;display:flex;flex-direction:column;gap:28px}
+h1{margin:0;font-size:22px;font-weight:600;letter-spacing:-.01em;text-wrap:balance}
+h2{margin:0;font-size:17px;font-weight:600}
+p{margin:0}
+.lead{color:var(--muted);max-width:60ch}
+section{display:flex;flex-direction:column;gap:12px}
+.demo{border:1.5px solid var(--line);border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:12px}
+.demo .q{font-size:15px}
+.field{display:flex;align-items:center;gap:8px;font-family:"Times New Roman",Georgia,serif;font-size:19px;flex-wrap:wrap}
+.field input{flex:1;min-width:0;height:42px;border:1.5px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);padding:0 10px;font:15px ui-monospace,SFMono-Regular,Menlo,monospace}
+.out{font-size:14px;color:var(--muted);min-height:22px}
+.out code{color:var(--ink);font:14px ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--soft);padding:2px 6px;border-radius:5px}
+.out.sent{color:var(--ok)}
+ol{margin:0;padding-left:1.4em;display:flex;flex-direction:column;gap:10px;max-width:62ch}
+.btn{height:46px;border-radius:12px;font:600 15px var(--font);cursor:pointer;border:1.5px solid var(--line);background:transparent;color:var(--ink);padding:0 18px;align-self:flex-start}
+.btn:hover{border-color:var(--muted)}
+.btn.primary{background:var(--ink);border-color:var(--ink);color:var(--on-ink)}
+.drag{display:inline-block;padding:10px 16px;border:1.5px dashed var(--muted);border-radius:10px;color:var(--ink);font-weight:600;text-decoration:none;align-self:flex-start}
+textarea{width:100%;height:110px;border:1.5px solid var(--line);border-radius:10px;background:var(--soft);color:var(--ink);padding:10px;font:12px ui-monospace,SFMono-Regular,Menlo,monospace;resize:vertical}
+.note{font-size:13.5px;color:var(--muted);max-width:62ch}
+button:focus-visible,a:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+</style>
+
+</head>
+<body>
+<main>
+  <div style="display:flex;flex-direction:column;gap:8px">
+    <h1>Mathebattle-Tastenfeld</h1>
+    <p class="lead">Ein Lesezeichen, das auf einer Mathebattle-Aufgabe ein Tastenfeld mit Brüchen, Hochzahlen und e-Funktionen einblendet. Der Term wird beim Tippen ins Mathebattle-Feld übertragen, die Vorschau und das Abschicken laufen wie gewohnt über Mathebattle.</p>
+    <p class="lead">Bei Aufgaben, in denen abgeleitet werden soll, gibt es drei Versuche: Eine falsche Antwort wird vorher abgefangen, erst der dritte Versuch geht ungeprüft an Mathebattle. Ist die Ableitung richtig, aber noch nicht vereinfacht, gibt es einen Hinweis, ohne dass ein Versuch verloren geht.</p>
+  </div>
+
+  <section>
+    <h2>Ausprobieren</h2>
+    <div class="demo">
+      <p class="q">Berechne die Ableitung von f mit f(x) = 2e<sup>3x</sup> und vereinfache:</p>
+      <div class="field">f'(x)=<input type="text" id="term_input" onkeyup="term_check(&quot;x&quot;,event);" aria-label="Eingabefeld wie bei Mathebattle"></div>
+      <div class="out" id="as_function" aria-live="polite"></div>
+      <span id="bloesen"></span>
+      <button type="button" class="btn primary" id="tryBtn">Tastenfeld öffnen</button>
+    </div>
+    <p class="note">Das Feld hier verhält sich wie das Eingabefeld von Mathebattle. Darunter siehst du, welcher Text bei Mathebattle ankommen würde.</p>
+  </section>
+
+  <section>
+    <h2>Auf dem iPad oder iPhone einrichten</h2>
+    <ol>
+      <li>Kopiere den Code mit dem Button unten.</li>
+      <li>Öffne in Safari irgendeine Seite, tippe auf das Teilen-Symbol und wähle „Lesezeichen hinzufügen“. Nenne es „MB Tastenfeld“ und sichere es.</li>
+      <li>Öffne die Lesezeichen über das Buch-Symbol, tippe auf „Bearbeiten“ und dann auf „MB Tastenfeld“. Lösche die Adresse, füge den kopierten Code ein und tippe auf „Fertig“.</li>
+      <li>Öffne bei Mathebattle eine Aufgabe. Öffne dann die Lesezeichen über das Buch-Symbol oder über die drei Punkte neben der Adresse und tippe dort auf „MB Tastenfeld“. Das Tastenfeld erscheint unten auf der Seite.</li>
+    </ol>
+    <p class="note">Starte das Lesezeichen immer aus der Lesezeichenliste. Über die Vorschläge in der Adressleiste blockiert Safari es mit der Meldung „Skript kann nicht ausgeführt werden“.</p>
+    <button type="button" class="btn primary" id="copyBtn">Code kopieren</button>
+    <p class="note" id="copyNote" aria-live="polite"></p>
+  </section>
+
+  <section>
+    <h2>Am Computer einrichten</h2>
+    <p>Zieh diesen Link in die Lesezeichenleiste deines Browsers. Auf Mathebattle klickst du dann auf das Lesezeichen.</p>
+    <a class="drag" id="dragLink" href="#">MB Tastenfeld</a>
+  </section>
+
+  <section>
+    <h2>Code</h2>
+    <textarea id="code" readonly aria-label="Code des Lesezeichens"></textarea>
+    <p class="note">Das Lesezeichen lädt das Tastenfeld jedes Mal frisch von dieser Seite. Verbesserungen kommen dadurch automatisch bei allen an. Einmal antippen reicht für die ganze Sitzung: Das Tastenfeld bleibt beim Abschicken und bei der nächsten Aufgabe erhalten. Erst wenn du die Seite selbst neu lädst, musst du das Lesezeichen wieder antippen. Ein erneutes Antippen blendet das Tastenfeld aus oder wieder ein.</p>
+  </section>
+</main>
+
+<script>
+var BM_URL="javascript:(function()%7Bif(window.__mbk)%7Bwindow.__mbk.toggle()%3Breturn%3B%7Dvar%20s%3Ddocument.createElement('script')%3Bs.src%3D'https%3A%2F%2Fjab-schule.github.io%2FMathebattle-Eingabefeld%2Ftastenfeld.js%3Fv%3D'%2BDate.now()%3Bs.onerror%3Dfunction()%7Balert('Das%20Tastenfeld%20konnte%20nicht%20geladen%20werden.%20Pr%C3%BCfe%20die%20Internetverbindung.')%3B%7D%3Bdocument.body.appendChild(s)%3B%7D)()%3B";
+document.getElementById('code').value=BM_URL;
+document.getElementById('dragLink').setAttribute('href', BM_URL);
+document.getElementById('dragLink').addEventListener('click', function(e){ e.preventDefault(); document.getElementById('copyNote').textContent=''; alertless('Zieh den Link in die Lesezeichenleiste, statt ihn anzuklicken.'); });
+function alertless(t){ var n=document.getElementById('copyNote'); n.textContent=t; }
+document.getElementById('copyBtn').addEventListener('click', function(){
+  var ta=document.getElementById('code');
+  var fallback=function(){ ta.focus(); ta.select(); alertless('Der Code ist markiert. Kopiere ihn über das Menü oder mit Strg+C.'); };
+  try{ navigator.clipboard.writeText(BM_URL).then(function(){ alertless('Code kopiert.'); }, fallback); }catch(e){ fallback(); }
+});
+/* Nachbau der Mathebattle-Funktionen für das Testfeld */
+function term_check(x, ev){
+  var v=document.getElementById('term_input').value, o=document.getElementById('as_function');
+  o.className='out';
+  o.innerHTML = v ? 'Bei Mathebattle käme an: <code></code>' : '';
+  if(v) o.querySelector('code').textContent=v;
+}
+function form_submit(){
+  var o=document.getElementById('as_function'), v=document.getElementById('term_input').value;
+  o.className='out sent'; o.textContent='Abgeschickt: '+v;
+}
+function runBookmarklet(){ if(window.__mbk){ window.__mbk.toggle(); return; } var sc=document.createElement('script'); sc.src='tastenfeld.js?v='+Date.now(); document.body.appendChild(sc); }
+document.getElementById('tryBtn').addEventListener('click', runBookmarklet);
+</script>
+
+</body>
+</html>
