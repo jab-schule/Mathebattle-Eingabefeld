@@ -185,6 +185,13 @@ st2.textContent=[
 D.head.appendChild(st2);
 function tablet(){
   var vp=D.querySelector('meta[name=viewport]');
+  /* Die angepasste Ansicht gilt nur auf Battle-Seiten, alle anderen Seiten bleiben im Original */
+  if(!D.querySelector('#content.EduBattles')){
+    D.documentElement.classList.remove('mbk-tab','mbk-modern');
+    var ob=D.querySelector('.mbk-bar'); if(ob) ob.remove();
+    if(vp && vp.hasAttribute('data-mbk')) vp.remove();
+    return;
+  }
   if(!vp){ vp=D.createElement('meta'); vp.name='viewport'; vp.setAttribute('data-mbk','1'); D.head.appendChild(vp); }
   vp.content='width=device-width,initial-scale=1,viewport-fit=cover';
   D.documentElement.classList.add('mbk-tab');
@@ -564,7 +571,8 @@ function currentTask(){
   var f=taskF(); if(f) TASK={key:key, f:f};
   return f;
 }
-function triesKey(){ return 'mbk-tries:'+((inp && inp.form && inp.form.action)||location.pathname); }
+/* Versuche pro Aufgabe: Im Training ist die Formularadresse für alle Aufgaben gleich, deshalb gehört die Aufgabe selbst mit in den Schlüssel */
+function triesKey(){ var f=currentTask(); return 'mbk-tries:'+((inp && inp.form && inp.form.action)||location.pathname)+(f?':'+fp(f):''); }
 function getTries(){ try{ return +localStorage.getItem(triesKey())||0; }catch(e){ return 0; } }
 function setTries(n){ try{ localStorage.setItem(triesKey(), String(n)); }catch(e){} }
 var LABEL=P.querySelector('.mbk-top span');
