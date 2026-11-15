@@ -8,9 +8,10 @@ function toast(msg){
   t.style.cssText='position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:2147483001;background:#16181D;color:#fff;font:15px -apple-system,system-ui,sans-serif;padding:12px 16px;border-radius:10px;max-width:90vw;text-align:center';
   D.body.appendChild(t); setTimeout(function(){ t.remove(); },3500);
 }
-if(!inp){ toast('Auf dieser Seite gibt es kein Eingabefeld für einen Term.'); return; }
+if(!inp && !/mathebattle/i.test(location.hostname) && !D.getElementById('content')){ toast('Auf dieser Seite gibt es kein Eingabefeld für einen Term.'); return; }
+if(!inp) toast('Das Tastenfeld erscheint, sobald du eine Aufgabe öffnest.');
 function varOf(el){ var m=/term_check\(\s*["']([^"']*)["']/.exec(el.getAttribute('onkeyup')||''); return m?m[1]:'x'; }
-var VAR=varOf(inp);
+var VAR=inp?varOf(inp):'x';
 var DEC=',';
 
 /* ---------- Eingabe-Modell: Zeichen, Klammern, Brüche, Hochzahlen, Funktionen ---------- */
@@ -152,6 +153,7 @@ st2.textContent=[
  '@media (max-width:600px){'+TAB+'.mbk-hs{top:calc(96px + env(safe-area-inset-top))}}',
  TAB+'#content{display:flex;flex-direction:column;padding:0 0 12px;overflow:visible;min-height:0}',
  TAB+'#content>*{order:3}',
+ TAB+'.mbk-choose{margin:24px 0 28px!important;float:none!important;clear:both}',
  TAB+'#aufgabe{order:1;margin-left:0;min-height:0;padding-top:48px}',
  TAB+'#highscore{position:fixed;top:0;right:0;bottom:0;float:none;width:min(320px,86vw);height:auto;box-sizing:border-box;background:#fff;border:0;border-left:1.5px solid #ddd;box-shadow:-8px 0 24px rgba(0,0,0,.12);overflow-y:auto;-webkit-overflow-scrolling:touch;padding:calc(12px + env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) 16px;font-size:.95em;transform:translateX(105%);transition:transform .25s ease;z-index:2147483001}',
  TAB+'#highscore.mbk-open{transform:none}',
@@ -183,6 +185,24 @@ st2.textContent=[
  TAB+'.mbk-hs{position:fixed;right:0;top:calc(64px + env(safe-area-inset-top));z-index:2147482999;writing-mode:vertical-rl;transform:rotate(180deg);border:1.5px solid #ccc;border-left:0;background:#fff;color:#25395E;border-radius:0 10px 10px 0;padding:14px 8px;font:600 15px -apple-system,system-ui,sans-serif;cursor:pointer;box-shadow:2px 0 10px rgba(0,0,0,.08)}'
 ].join('\n');
 D.head.appendChild(st2);
+/* Startseite eines Battles: Aufgabenauswahl mit "Spielen!" über die Einstellungen setzen */
+function startPage(){
+  var c=D.getElementById('content'); if(!c || c.querySelector('.mbk-choose')) return;
+  var btn=Array.prototype.find.call(c.querySelectorAll('input[type=submit],button,a'), function(e){ return /Spielen/i.test(e.value||e.textContent||''); });
+  if(!btn) return;
+  var w=D.createTreeWalker(c, NodeFilter.SHOW_TEXT), t, hd=null;
+  while((t=w.nextNode())){ if(/Einstellungen f(ü|ue)r/.test(t.nodeValue)){ hd=t.parentElement; break; } }
+  if(!hd) return;
+  var f=btn.closest('form')||btn.parentElement, anc=f.parentElement;
+  while(anc && !anc.contains(hd)) anc=anc.parentElement;
+  if(!anc) return;
+  var cf=f, cs=hd;
+  while(cf.parentElement!==anc) cf=cf.parentElement;
+  while(cs.parentElement!==anc) cs=cs.parentElement;
+  if(cf===cs) return;
+  anc.insertBefore(cf, cs);
+  cf.classList.add('mbk-choose');
+}
 function tablet(){
   var vp=D.querySelector('meta[name=viewport]');
   /* Die angepasste Ansicht gilt nur auf Battle-Seiten, alle anderen Seiten bleiben im Original */
@@ -211,6 +231,7 @@ function tablet(){
     c.addEventListener('click',function(){ hs.classList.remove('mbk-open'); });
     hs.insertBefore(c, hs.firstChild);
   }
+  startPage();
   /* blauen Lösen-Button rechts neben das Eingabefeld */
   var ti=D.getElementById('term_input'), sub=ti && ti.form && ti.form.querySelector('div.submit');
   if(ti && sub && ti.nextElementSibling!==sub) ti.parentNode.insertBefore(sub, ti.nextSibling);
@@ -276,6 +297,7 @@ function arrange(land){
   (land?LAND:PORT).forEach(function(i){ KB.appendChild(BTN[i]); });
 }
 function prefix(){
+  if(!inp) return;
   var pre=/([a-zA-Z]'*\([a-z]\)\s*=)\s*$/.exec((inp.previousSibling||{}).textContent||'');
   P.querySelector('.mbk-pre').textContent = pre ? pre[1].replace(/'/g,'′') : '=';
 }
@@ -305,7 +327,7 @@ function queueFit(){ if(fitQueued) return; fitQueued=true; requestAnimationFrame
 if(W.visualViewport){ W.visualViewport.addEventListener('resize',queueFit); W.visualViewport.addEventListener('scroll',queueFit); }
 W.addEventListener('resize',queueFit); W.addEventListener('scroll',queueFit); W.addEventListener('orientationchange',function(){ setTimeout(fit,300); });
 
-function prep(){ inp.setAttribute('inputmode','none'); inp.setAttribute('readonly','readonly'); }
+function prep(){ if(!inp) return; inp.setAttribute('inputmode','none'); inp.setAttribute('readonly','readonly'); }
 prep();
 
 var timer=null;
@@ -778,4 +800,5 @@ D.addEventListener('keydown',function(e){
 
 W.__mbk={toggle:toggle, _t:{parseExpr:parseExpr, judge:judge, simp:simp, hint:function(s){ return hintHtml(s); }, taskF:function(){ return taskF(); }, task:function(){ return currentTask(); }}};
 render(); fit(); label(); hookAll();
+if(!inp) attach();
 })();
