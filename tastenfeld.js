@@ -169,6 +169,12 @@ st2.textContent=[
  TAB+'.mbk-nav span{color:#5b6472}',
  TAB+'h2.aufgabe{float:none;margin:48px 0 8px;font-size:1.25em}',
  'html.mbk-tab.mbk-train .exercise_form{margin-bottom:48px}',
+ TAB+'h2.mbk-result{margin:48px 0 16px;font-size:24px;font-weight:600;float:none}',
+ TAB+'h2.mbk-result.ok{color:#1f7a3d}',
+ TAB+'h2.mbk-result.bad{color:#B42318}',
+ TAB+'#response{font-size:17px;line-height:1.5;margin-bottom:48px}',
+ TAB+'#response .right{text-align:left;float:none}',
+ TAB+'#response .buttons a{display:inline-block;background:#34508f;color:#fff;border-radius:10px;padding:12px 18px;font-weight:600;font-size:16px;text-decoration:none;margin:8px 0}',
  TAB+'.exercise_question{font-size:1.05em;line-height:1.6}',
  TAB+'.exercise_question br{display:none}',
  TAB+'.exercise_form{margin-top:24px;text-align:left}',
@@ -221,6 +227,12 @@ function trainingLayout(){
     if(nx){ var s=D.createElement('span'); s.appendChild(D.createTextNode('weiter zu ')); s.appendChild(nx); nav.appendChild(s); }
     c.insertBefore(nav, c.firstChild);
   }
+  /* Ergebnisseite: Überschrift einfärben */
+  var res=c.querySelector('#response');
+  if(res){
+    var rh=Array.prototype.find.call(c.querySelectorAll('h2'), function(h){ return !h.classList.contains('aufgabe'); });
+    if(rh){ rh.classList.add('mbk-result'); var tx=rh.textContent||''; rh.classList.add(/richtig/i.test(tx) && !/nicht richtig/i.test(tx) ? 'ok' : /falsch|leider|nicht richtig/i.test(tx) ? 'bad' : 'neutral'); }
+  }
   var h2=c.querySelector('h2.aufgabe'), h3=c.querySelector('h3.typ');
   if(h2 && h3){
     var typ=(h3.textContent||'').replace(/^\s*Typ:\s*/,'').trim();
@@ -230,7 +242,7 @@ function trainingLayout(){
 function tablet(){
   var vp=D.querySelector('meta[name=viewport]');
   /* Die angepasste Ansicht gilt nur auf Battle-Seiten, alle anderen Seiten bleiben im Original */
-  var train=!!D.querySelector('#content.EduRandomtasks .exercise_question, #content.EduRandomtasks h2.aufgabe');
+  var train=!!D.querySelector('#content.EduRandomtasks .exercise_question, #content.EduRandomtasks h2.aufgabe, #content.EduRandomtasks #response');
   D.documentElement.classList.toggle('mbk-train', train);
   if(!D.querySelector('#content.EduBattles') && !train){
     D.documentElement.classList.remove('mbk-tab','mbk-modern');
@@ -279,6 +291,7 @@ st3.textContent=[
  MOD+'#aufgabe h2,'+MOD+'h2.aufgabe{font:600 14px/1.3 '+SANS+';color:#5b6472;letter-spacing:.01em;margin-bottom:10px}',
  MOD+'#aufgabe h2{margin-top:0}',
  MOD+'.mbk-nav{font-family:'+SANS+'}',
+ MOD+'h2.mbk-result,'+MOD+'#response,'+MOD+'#response .buttons a{font-family:'+SANS+'}',
  MOD+'.exercise_question{font-size:18px;line-height:1.5;color:#16181d;font-weight:400;letter-spacing:-.005em}',
  MOD+'.term_form{font:500 18px '+SANS+';color:#5b6472}',
  MOD+'#term_input{font:17px '+MONO+';color:#16181d;background:#f6f7f9;border:1.5px solid #d5d9e0;border-radius:10px;padding:10px 12px}',
