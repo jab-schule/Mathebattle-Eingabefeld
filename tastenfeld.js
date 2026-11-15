@@ -113,7 +113,9 @@ st.textContent=
 '#mbk .mbk-ph{display:inline-block;width:.6em;height:.75em;border:1.2px solid #9AA1AD;border-radius:2px;vertical-align:-.05em;margin:0 .05em}'+
 '#mbk .mbk-c{display:inline-block;width:2px;height:1em;background:#2F55D4;vertical-align:-.15em;margin:0 1px;animation:mbkb 1.06s steps(1) infinite}'+
 '@keyframes mbkb{50%{opacity:0}}'+
-'#mbk .mbk-msg{font-size:14px}'+
+'#mbk .mbk-msg{position:absolute;left:max(12px,env(safe-area-inset-left));right:max(12px,env(safe-area-inset-right));bottom:calc(100% + 8px);max-width:560px;margin:0 auto;font-size:15px;line-height:1.4;padding:10px 14px;border-radius:10px;background:#fff;color:#16181D;border:1.5px solid #E5E7EB;cursor:pointer;animation:mbkpop .18s ease-out}'+
+'@keyframes mbkpop{from{opacity:0;transform:translateY(6px)}}'+
+'@media (prefers-reduced-motion:reduce){#mbk .mbk-msg{animation:none}}'+
 '#mbk .mbk-msg:empty{display:none}'+
 '#mbk.land .mbk-in{max-width:none;display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:10px;row-gap:6px;align-items:center}'+
 '#mbk.land .mbk-top{grid-column:2;grid-row:1}'+
@@ -124,8 +126,8 @@ st.textContent=
 '#mbk.land .mbk-k button{height:38px}'+
 
 '#mbk.land{padding-top:6px;padding-bottom:calc(6px + env(safe-area-inset-bottom))}'+
-'#mbk .mbk-msg.err{color:#B42318;background:#FDECEA;padding:8px 12px;border-radius:8px}'+
-'#mbk .mbk-msg.hint{color:#2546B8;background:#EAF0FE;padding:8px 12px;border-radius:8px}'+
+'#mbk .mbk-msg.err{color:#B42318;background:#FDECEA;border-color:#F5C2BC}'+
+'#mbk .mbk-msg.hint{color:#2546B8;background:#EAF0FE;border-color:#C7D4FB}'+
 '#mbk .mbk-m{font:1.25em "Times New Roman",Georgia,serif;white-space:nowrap;color:#16181D}'+
 '#mbk .mbk-k{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}'+
 '#mbk .mbk-k button{height:44px;border:0;border-radius:10px;background:#F3F4F6;color:#16181D;font:500 18px -apple-system,system-ui,sans-serif;cursor:pointer;touch-action:manipulation;padding:0}'+
@@ -303,6 +305,7 @@ function prefix(){
 }
 prefix();
 var OUT=P.querySelector('.mbk-out'), MSG=P.querySelector('.mbk-msg');
+MSG.title='Antippen zum Schließen'; MSG.addEventListener('click', function(e){ e.stopPropagation(); msg(''); });
 var OPEN=D.createElement('button'); OPEN.id='mbk-open'; OPEN.type='button'; OPEN.textContent='Tastenfeld'; OPEN.hidden=true;
 D.body.appendChild(P); D.body.appendChild(OPEN);
 var spacer=D.createElement('div'); D.body.appendChild(spacer);
@@ -337,7 +340,7 @@ function sync(now){
   var run=function(){ try{ if(typeof W.term_check==='function') W.term_check(VAR,{keyCode:0}); }catch(e){} };
   if(now) run(); else timer=setTimeout(run,300);
 }
-function msg(t,kind,isHtml){ if(isHtml) MSG.innerHTML=t||''; else MSG.textContent=t||''; MSG.className='mbk-msg'+(kind==='hint'?' hint':kind?' err':''); pad(); }
+function msg(t,kind,isHtml){ if(isHtml) MSG.innerHTML=t||''; else MSG.textContent=t||''; MSG.className='mbk-msg'+(kind==='hint'?' hint':kind?' err':''); if(t){ MSG.style.animation='none'; void MSG.offsetWidth; MSG.style.animation=''; } pad(); }
 function render(){ OUT.innerHTML=html(root,true)||'<span class="mbk-c"></span>'; pad(); }
 
 /* ================= Prüfung bei Ableitungsaufgaben =================
