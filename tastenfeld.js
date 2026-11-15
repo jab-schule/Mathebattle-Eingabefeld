@@ -142,13 +142,14 @@ var TAB='html.mbk-tab ';
 var st2=D.createElement('style'); st2.setAttribute('data-mbk','1');
 st2.textContent=[
  TAB+'body{font-size:100%;-webkit-text-size-adjust:100%}',
- TAB+'#page_whole_width{background-size:auto calc((min(100vw,1000px) - 24px) * .187)}',
+ TAB+'#page_whole_width{background:none}',
  TAB+'#page{width:auto;max-width:1000px;padding:0 max(12px,env(safe-area-inset-right)) 0 max(12px,env(safe-area-inset-left));box-sizing:border-box}',
- TAB+'#header_col1{width:100%;margin:0;float:none}',
- TAB+'#header_col1 img{display:block;width:100%;max-width:1000px;height:auto}',
- TAB+'#menu_div{display:none}',
- TAB+'#login_top{top:calc((min(100vw,1000px) - 24px) * .128)}',
- '@media (max-width:600px){'+TAB+'#login_top{font-size:.85em;top:calc((100vw - 24px) * .11)}'+TAB+'#login_top .log_status{display:none}}',
+ TAB+'#header{display:none}',
+ '.mbk-bar{display:none}',
+ TAB+'.mbk-bar{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:2px 16px;background:#f8931d;color:#fff;padding:calc(10px + env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) 10px max(16px,env(safe-area-inset-left));font:15px -apple-system,system-ui,sans-serif}',
+ TAB+'.mbk-bar b{font-size:19px;font-weight:700;letter-spacing:.01em}',
+ TAB+'.mbk-bar span{font-size:13px;color:#fff3e0}',
+ '@media (max-width:600px){'+TAB+'.mbk-hs{top:calc(96px + env(safe-area-inset-top))}}',
  TAB+'#content{display:flex;flex-direction:column;padding:0 0 12px;overflow:visible;min-height:0}',
  TAB+'#content>*{order:3}',
  TAB+'#aufgabe{order:1;margin-left:0;min-height:0;padding-top:48px}',
@@ -179,7 +180,7 @@ st2.textContent=[
  TAB+'form div.submit input[type=submit],'+TAB+'.bluebuttons a{font-size:17px;padding:10px 18px;border-radius:8px}',
  TAB+'#all_stats table,'+TAB+'#content table{display:block;max-width:100%;overflow-x:auto}',
  TAB+'#content img{max-width:100%;height:auto}',
- TAB+'.mbk-hs{position:fixed;right:0;top:calc((min(100vw,1000px) - 24px) * .187 + 16px);z-index:2147482999;writing-mode:vertical-rl;transform:rotate(180deg);border:1.5px solid #ccc;border-left:0;background:#fff;color:#25395E;border-radius:0 10px 10px 0;padding:14px 8px;font:600 15px -apple-system,system-ui,sans-serif;cursor:pointer;box-shadow:2px 0 10px rgba(0,0,0,.08)}'
+ TAB+'.mbk-hs{position:fixed;right:0;top:calc(64px + env(safe-area-inset-top));z-index:2147482999;writing-mode:vertical-rl;transform:rotate(180deg);border:1.5px solid #ccc;border-left:0;background:#fff;color:#25395E;border-radius:0 10px 10px 0;padding:14px 8px;font:600 15px -apple-system,system-ui,sans-serif;cursor:pointer;box-shadow:2px 0 10px rgba(0,0,0,.08)}'
 ].join('\n');
 D.head.appendChild(st2);
 function tablet(){
@@ -187,6 +188,11 @@ function tablet(){
   if(!vp){ vp=D.createElement('meta'); vp.name='viewport'; vp.setAttribute('data-mbk','1'); D.head.appendChild(vp); }
   vp.content='width=device-width,initial-scale=1,viewport-fit=cover';
   D.documentElement.classList.add('mbk-tab');
+  if(!D.querySelector('.mbk-bar')){
+    var bar=D.createElement('div'); bar.className='mbk-bar'; bar.setAttribute('data-mbk','1');
+    bar.innerHTML='<b>Mathebattle</b><span>Seite neu laden, um zur normalen Ansicht zurückzukehren</span>';
+    D.body.insertBefore(bar, D.body.firstChild);
+  }
   var hs=D.getElementById('highscore');
   if(hs && !hs.querySelector('.mbk-hs-close')){
     var old=D.querySelector('.mbk-hs'); if(old) old.remove();
