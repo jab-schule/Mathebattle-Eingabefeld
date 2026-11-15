@@ -163,6 +163,7 @@ st2.textContent=[
  TAB+'#aufgabe h2{font-size:1.25em;margin:0 0 8px}',
  TAB+'.exercise_question{font-size:1.25em;line-height:1.6}',
  TAB+'.exercise_question br{display:none}',
+ '@media (max-width:600px){'+TAB+'.exercise_question{font-size:1.05em}}',
  TAB+'.exercise_form{margin-top:24px;text-align:left}',
  TAB+'.exercise_form>p.comment{margin:0 0 34px;padding:0;text-align:left;font-size:1em}',
  TAB+'.exercise_form>p.comment>br:first-child{display:none}',
@@ -262,7 +263,8 @@ st3.textContent=[
  MOD+'#highscore{font-size:15px}',
  MOD+'#highscore h3{font-size:17px;font-weight:600}',
  MOD+'#highscore h4{font-size:16px;font-weight:600}',
- MOD+'.mbk-hs,'+MOD+'.mbk-hs-close{font-family:'+SANS+'}'
+ MOD+'.mbk-hs,'+MOD+'.mbk-hs-close{font-family:'+SANS+'}',
+ '@media (max-width:600px){'+MOD+'.exercise_question{font-size:18px;line-height:1.5}'+MOD+'#aufgabe h2{font-size:14px}'+MOD+'#as_function{font-size:18px}}'
 ].join('\n');
 D.head.appendChild(st3);
 
