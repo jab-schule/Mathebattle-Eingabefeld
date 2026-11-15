@@ -320,6 +320,7 @@ function numLit(n){ if(n.t==='num') return true; if(n.t==='neg') return numLit(n
 function hasVar(n){ return n.t==='var' || ['neg','fn'].indexOf(n.t)>=0&&hasVar(n.a) || n.t==='add'&&n.items.some(function(i){ return hasVar(i.n); }) || n.t==='mul'&&n.fs.some(hasVar) || n.t==='div'&&(hasVar(n.a)||hasVar(n.b)) || n.t==='pow'&&(hasVar(n.b)||hasVar(n.e)); }
 function hasCon(n){ return n.t==='con' || ['neg','fn'].indexOf(n.t)>=0&&hasCon(n.a) || n.t==='add'&&n.items.some(function(i){ return hasCon(i.n); }) || n.t==='mul'&&n.fs.some(hasCon) || n.t==='div'&&(hasCon(n.a)||hasCon(n.b)) || n.t==='pow'&&(hasCon(n.b)||hasCon(n.e)); }
 function gcd(a,b){ a=Math.abs(a); b=Math.abs(b); while(b){ var t=a%b; a=b; b=t; } return a; }
+function hasAdd(n){ return n.t==='add' || (n.t==='neg'||n.t==='fn')&&hasAdd(n.a) || n.t==='mul'&&n.fs.some(hasAdd) || n.t==='div'&&(hasAdd(n.a)||hasAdd(n.b)) || n.t==='pow'&&(hasAdd(n.b)||hasAdd(n.e)); }
 function flatFactors(n){
   var out=[], neg=0;
   (function walk(m){
@@ -338,7 +339,7 @@ function simp(n){
   function bad(x){ if(!r) r=x; }
   (function walk(m){
     if(r) return;
-    if(!hasVar(m) && !hasCon(m) && !numLit(m) && m.t!=='fn'){ bad('multiply'); return; }
+    if(!hasVar(m) && !hasCon(m) && !numLit(m) && m.t!=='fn'){ bad(hasAdd(m) ? 'sum' : 'multiply'); return; }
     switch(m.t){
       case 'num': return;
       case 'div':
@@ -363,7 +364,7 @@ function simp(n){
           var n0=it.n, F=flatFactors(n0).fs, rest=F.filter(function(q){ return !numLit(q); });
           if(n0.t==='num' && n0.v===0) bad('neutral');
           var key=rest.length ? fp(rest.length===1?rest[0]:{t:'mul',fs:rest}) : 'C';
-          if(keys[key]) bad('combine'); keys[key]=1;
+          if(keys[key]) bad(key==='C' ? 'sum' : 'combine'); keys[key]=1;
           var seen={};
           rest.forEach(function(q){ if(isE(q)){ var k=fp(eExp(q)); if(!seen[k]){ seen[k]=1; eKeys[k]=(eKeys[k]||0)+1; } } });
           walk(n0);
@@ -376,6 +377,7 @@ function simp(n){
 }
 var HINTS={
   multiply:'Richtig abgeleitet. Rechne jetzt noch die Produkte aus.',
+  sum:'Richtig abgeleitet. Rechne jetzt noch die Summen aus.',
   reduce:'Richtig abgeleitet. Kürze noch den Bruch.',
   neutral:'Richtig abgeleitet. Lass Faktoren 1, Summanden 0 und Hochzahlen 1 weg.',
   combinePow:'Richtig abgeleitet. Fasse gleiche Faktoren zu einer Potenz zusammen.',
