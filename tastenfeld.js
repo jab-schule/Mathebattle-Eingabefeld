@@ -188,6 +188,7 @@ function tablet(){
   if(!vp){ vp=D.createElement('meta'); vp.name='viewport'; vp.setAttribute('data-mbk','1'); D.head.appendChild(vp); }
   vp.content='width=device-width,initial-scale=1,viewport-fit=cover';
   D.documentElement.classList.add('mbk-tab');
+  D.documentElement.classList.toggle('mbk-modern', MODERN);
   if(!D.querySelector('.mbk-bar')){
     var bar=D.createElement('div'); bar.className='mbk-bar'; bar.setAttribute('data-mbk','1');
     bar.innerHTML='<b>Mathebattle</b><span>Seite neu laden, um zur normalen Ansicht zurückzukehren</span>';
@@ -207,6 +208,36 @@ function tablet(){
   var ti=D.getElementById('term_input'), sub=ti && ti.form && ti.form.querySelector('div.submit');
   if(ti && sub && ti.nextElementSibling!==sub) ti.parentNode.insertBefore(sub, ti.nextSibling);
 }
+/* ---------- Moderne Typografie ----------
+   Alles hier hängt an der Klasse mbk-modern. Zum Rückgängigmachen MODERN auf false setzen. */
+var MODERN=true;
+var MOD='html.mbk-tab.mbk-modern ';
+var SANS='-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,system-ui,sans-serif';
+var MONO='ui-monospace,"SF Mono",Menlo,Consolas,monospace';
+var st3=D.createElement('style'); st3.setAttribute('data-mbk','1');
+st3.textContent=[
+ MOD+'body,'+MOD+'#content,'+MOD+'#content p,'+MOD+'#content td,'+MOD+'#content th,'+MOD+'#content li{font-family:'+SANS+'}',
+ MOD+'body{font-size:17px;line-height:1.5;color:#1d2330;-webkit-font-smoothing:antialiased}',
+ MOD+'.mbk-bar{font-family:'+SANS+'}',
+ MOD+'.mbk-bar b{font-size:20px;font-weight:700;letter-spacing:-.01em}',
+ MOD+'.mbk-bar span{font-size:13.5px}',
+ MOD+'#aufgabe h2{font:600 15px/1.3 '+SANS+';color:#5b6472;letter-spacing:.01em;margin:0 0 10px}',
+ MOD+'.exercise_question{font-size:22px;line-height:1.45;color:#16181d;font-weight:400;letter-spacing:-.005em}',
+ MOD+'.term_form{font:500 18px '+SANS+';color:#5b6472}',
+ MOD+'#term_input{font:17px '+MONO+';color:#16181d;background:#f6f7f9;border:1.5px solid #d5d9e0;border-radius:10px;padding:10px 12px}',
+ MOD+'.term_form div.submit input[type=submit]{font:600 17px '+SANS+';letter-spacing:.01em;border-radius:10px;padding:11px 20px}',
+ MOD+'.term_form #control{background:#f3f4f6;border:1.5px solid #e1e4e9;border-radius:12px}',
+ MOD+'.term_form #control p{font:14.5px '+SANS+';color:#5b6472}',
+ MOD+'#as_function{font:600 21px/1.35 '+SANS+';color:#16181d}',
+ MOD+'.exercise_form>p.comment a{font:500 15.5px/1.45 '+SANS+';font-style:normal;color:#b8620a}',
+ MOD+'#highscore,'+MOD+'#highscore td,'+MOD+'#highscore h3,'+MOD+'#highscore h4{font-family:'+SANS+'}',
+ MOD+'#highscore{font-size:15px}',
+ MOD+'#highscore h3{font-size:17px;font-weight:600}',
+ MOD+'#highscore h4{font-size:16px;font-weight:600}',
+ MOD+'.mbk-hs,'+MOD+'.mbk-hs-close{font-family:'+SANS+'}'
+].join('\n');
+D.head.appendChild(st3);
+
 tablet();
 
 var K=[
