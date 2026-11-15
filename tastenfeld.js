@@ -537,7 +537,7 @@ function go(){
   })();
 }
 function act(a,v){
-  msg('');
+  /* Hinweise bleiben stehen, bis erneut geprüft wird */
   if(a==='c') typeC(v);
   else if(a==='paren') typeN('paren');
   else if(a==='frac') typeN('frac');
