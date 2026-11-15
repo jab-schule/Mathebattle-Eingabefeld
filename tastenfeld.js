@@ -163,6 +163,12 @@ st2.textContent=[
  TAB+'.mbk-hs-close{display:block;margin:0 0 12px auto;border:0;background:none;color:#25395E;text-decoration:underline;font:15px -apple-system,system-ui,sans-serif;cursor:pointer;padding:4px}',
 '@media (prefers-reduced-motion:reduce){'+TAB+'#highscore{transition:none}}',
  TAB+'#aufgabe h2{font-size:1.25em;margin:0 0 8px}',
+ 'html.mbk-tab.mbk-train .actions,html.mbk-tab.mbk-train .next_prev,html.mbk-tab.mbk-train h3.typ{display:none}',
+ TAB+'.mbk-nav{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px 16px;margin-top:16px;font-size:15px}',
+ TAB+'.mbk-nav a{color:#b8620a;text-decoration:none;font-weight:500}',
+ TAB+'.mbk-nav span{color:#5b6472}',
+ TAB+'h2.aufgabe{float:none;margin:48px 0 8px;font-size:1.25em}',
+ 'html.mbk-tab.mbk-train .exercise_form{margin-bottom:48px}',
  TAB+'.exercise_question{font-size:1.05em;line-height:1.6}',
  TAB+'.exercise_question br{display:none}',
  TAB+'.exercise_form{margin-top:24px;text-align:left}',
@@ -205,10 +211,28 @@ function startPage(){
   anc.insertBefore(cf, cs);
   cf.classList.add('mbk-choose');
 }
+/* Trainingsseite: Navigation in eine Zeile, Überschrift zusammenfassen */
+function trainingLayout(){
+  var c=D.getElementById('content'); if(!c || c.querySelector('.mbk-nav')) return;
+  var back=c.querySelector('.actions a'), nx=c.querySelector('.next_prev a');
+  if(back || nx){
+    var nav=D.createElement('div'); nav.className='mbk-nav';
+    if(back) nav.appendChild(back);
+    if(nx){ var s=D.createElement('span'); s.appendChild(D.createTextNode('weiter zu ')); s.appendChild(nx); nav.appendChild(s); }
+    c.insertBefore(nav, c.firstChild);
+  }
+  var h2=c.querySelector('h2.aufgabe'), h3=c.querySelector('h3.typ');
+  if(h2 && h3){
+    var typ=(h3.textContent||'').replace(/^\s*Typ:\s*/,'').trim();
+    h2.textContent='Aufgabe · '+typ;
+  }
+}
 function tablet(){
   var vp=D.querySelector('meta[name=viewport]');
   /* Die angepasste Ansicht gilt nur auf Battle-Seiten, alle anderen Seiten bleiben im Original */
-  if(!D.querySelector('#content.EduBattles')){
+  var train=!!D.querySelector('#content.EduRandomtasks .exercise_question, #content.EduRandomtasks h2.aufgabe');
+  D.documentElement.classList.toggle('mbk-train', train);
+  if(!D.querySelector('#content.EduBattles') && !train){
     D.documentElement.classList.remove('mbk-tab','mbk-modern');
     var ob=D.querySelector('.mbk-bar'); if(ob) ob.remove();
     if(vp && vp.hasAttribute('data-mbk')) vp.remove();
@@ -234,6 +258,7 @@ function tablet(){
     hs.insertBefore(c, hs.firstChild);
   }
   startPage();
+  if(train) trainingLayout();
   /* blauen Lösen-Button rechts neben das Eingabefeld */
   var ti=D.getElementById('term_input'), sub=ti && ti.form && ti.form.querySelector('div.submit');
   if(ti && sub && ti.nextElementSibling!==sub) ti.parentNode.insertBefore(sub, ti.nextSibling);
@@ -251,7 +276,9 @@ st3.textContent=[
  MOD+'.mbk-bar{font-family:'+SANS+'}',
  MOD+'.mbk-bar b{font-size:20px;font-weight:700;letter-spacing:-.01em}',
  MOD+'.mbk-bar span{font-size:13.5px}',
- MOD+'#aufgabe h2{font:600 14px/1.3 '+SANS+';color:#5b6472;letter-spacing:.01em;margin:0 0 10px}',
+ MOD+'#aufgabe h2,'+MOD+'h2.aufgabe{font:600 14px/1.3 '+SANS+';color:#5b6472;letter-spacing:.01em;margin-bottom:10px}',
+ MOD+'#aufgabe h2{margin-top:0}',
+ MOD+'.mbk-nav{font-family:'+SANS+'}',
  MOD+'.exercise_question{font-size:18px;line-height:1.5;color:#16181d;font-weight:400;letter-spacing:-.005em}',
  MOD+'.term_form{font:500 18px '+SANS+';color:#5b6472}',
  MOD+'#term_input{font:17px '+MONO+';color:#16181d;background:#f6f7f9;border:1.5px solid #d5d9e0;border-radius:10px;padding:10px 12px}',
