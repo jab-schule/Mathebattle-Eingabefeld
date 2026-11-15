@@ -124,8 +124,8 @@ st.textContent=
 '#mbk.land .mbk-k button{height:38px}'+
 
 '#mbk.land{padding-top:6px;padding-bottom:calc(6px + env(safe-area-inset-bottom))}'+
-'#mbk .mbk-msg.err{color:#C2410C}'+
-'#mbk .mbk-msg.hint{color:#2F55D4}'+
+'#mbk .mbk-msg.err{color:#B42318;background:#FDECEA;padding:8px 12px;border-radius:8px}'+
+'#mbk .mbk-msg.hint{color:#2546B8;background:#EAF0FE;padding:8px 12px;border-radius:8px}'+
 '#mbk .mbk-m{font:1.25em "Times New Roman",Georgia,serif;white-space:nowrap;color:#16181D}'+
 '#mbk .mbk-k{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}'+
 '#mbk .mbk-k button{height:44px;border:0;border-radius:10px;background:#F3F4F6;color:#16181D;font:500 18px -apple-system,system-ui,sans-serif;cursor:pointer;touch-action:manipulation;padding:0}'+
