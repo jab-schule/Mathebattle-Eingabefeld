@@ -102,7 +102,6 @@ st.textContent=
 '#mbk .mbk-top{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13px;color:#6B717C}'+
 '#mbk .mbk-top button{border:0;background:none;color:#6B717C;font:inherit;text-decoration:underline;padding:4px;cursor:pointer}'+
 '#mbk .mbk-f{background:#F3F4F6;border-radius:10px;min-height:56px;padding:8px 14px;display:flex;align-items:center;gap:8px;overflow-x:auto;font:22px "Times New Roman",Georgia,serif;white-space:nowrap}'+
-'#mbk .mbk-f .mbk-pre{color:#6B717C;font-size:17px;font-style:italic;flex:none}'+
 '#mbk .mbk-f i{font-style:italic}'+
 '#mbk .mbk-op{margin:0 .18em}'+
 '#mbk sup{font-size:.68em;vertical-align:.75em;line-height:0}'+
@@ -139,7 +138,6 @@ st.textContent=
 '#mbk [hidden]{display:none!important}'+
 '#mbk.simple .mbk-k,#mbk.simple.land .mbk-k{grid-template-columns:repeat(6,1fr);gap:6px;width:100%;max-width:560px;justify-self:center;margin:0 auto}'+
 '#mbk.simple .mbk-f{font-family:-apple-system,system-ui,sans-serif;font-size:21px}'+
-'#mbk.simple .mbk-f .mbk-pre{font-style:normal;font-size:16px}'+
 'input.mbk-act{outline:3px solid #2F55D4!important;outline-offset:2px}'+
 '#mbk-open{position:fixed;left:0;top:0;transform-origin:0 0;z-index:2147483000;border:0;border-radius:12px;background:#16181D;color:#fff;font:600 15px -apple-system,system-ui,sans-serif;padding:12px 16px;cursor:pointer}'+
 '';
@@ -331,7 +329,7 @@ var K=[
 ];
 var P=D.createElement('div'); P.id='mbk';
 P.innerHTML='<div class="mbk-in"><div class="mbk-top"><span>Tastenfeld für Mathebattle</span><button type="button" data-a="hide">Ausblenden</button></div>'+
- '<div class="mbk-f"><span class="mbk-pre"></span><span class="mbk-out"></span></div>'+
+ '<div class="mbk-f"><span class="mbk-out"></span></div>'+
  '<div class="mbk-msg" aria-live="polite"></div><div class="mbk-k"></div></div>';
 var KB=P.querySelector('.mbk-k');
 var BTN={};
@@ -366,11 +364,7 @@ function arrange(land){
   var key=land?'l':'p'; if(key===layout) return; layout=key;
   (land?LAND:PORT).forEach(function(i){ KB.appendChild(BTN[i]); });
 }
-function prefix(){
-  if(!inp) return;
-  var pre=/([a-zA-Z]'*\([a-z]\)\s*=)\s*$/.exec((inp.previousSibling||{}).textContent||'');
-  P.querySelector('.mbk-pre').textContent = pre ? pre[1].replace(/'/g,'′') : '=';
-}
+function prefix(){}
 prefix();
 var OUT=P.querySelector('.mbk-out'), MSG=P.querySelector('.mbk-msg');
 MSG.title='Antippen zum Schließen'; MSG.addEventListener('click', function(e){ e.stopPropagation(); msg(''); });
@@ -542,17 +536,14 @@ function simp(n){
         F.forEach(function(q){ if(numLit(q)) return; var b=isE(q)?'e':fp(q.t==='pow'?q.b:q); if(bases[b]) bad('combinePow'); bases[b]=1; });
         F.forEach(walk); return; }
       case 'add': {
-        var keys={}, eKeys={}, consts=m.items.filter(function(it){ return !hasVar(it.n) && !hasCon(it.n); });
+        var keys={}, consts=m.items.filter(function(it){ return !hasVar(it.n) && !hasCon(it.n); });
         m.items.forEach(function(it){
           var n0=it.n, F=flatFactors(n0).fs, rest=F.filter(function(q){ return !numLit(q); });
           if(n0.t==='num' && n0.v===0) bad('neutral');
           var key=rest.length ? fp(rest.length===1?rest[0]:{t:'mul',fs:rest}) : 'C';
           if(keys[key]){ if(key==='C') bad('number', {t:'add', items:consts}); else bad('combine'); } keys[key]=1;
-          var seen={};
-          rest.forEach(function(q){ if(isE(q)){ var k=fp(eExp(q)); if(!seen[k]){ seen[k]=1; eKeys[k]=(eKeys[k]||0)+1; } } });
           walk(n0);
         });
-        Object.keys(eKeys).forEach(function(k){ if(eKeys[k]>1) bad('factorE'); });
         return; }
     }
   })(n);
@@ -587,8 +578,7 @@ var HINTS={
   reduce:'Kürze noch den Bruch.',
   neutral:'Lass Faktoren 1, Summanden 0 und Hochzahlen 1 weg.',
   combinePow:'Fasse gleiche Faktoren zu einer Potenz zusammen.',
-  combine:'Fasse noch gleichartige Terme zusammen.',
-  factorE:'Klammere noch den e-Term aus.'
+  combine:'Fasse noch gleichartige Terme zusammen.'
 };
 function anyNode(n,pred){
   if(!n) return false; if(pred(n)) return true;
@@ -602,12 +592,11 @@ function anyNode(n,pred){
   return false;
 }
 function taskText(){ var q=D.querySelector('.exercise_question'); return q?(q.textContent||''):''; }
-/* Welcher Hinweis passt zur Aufgabe? Ausklammern nur bei Ableitungen, Zahlen mit Potenzen, Wurzeln oder Logarithmen
-   bleiben stehen, wenn es in der Aufgabe gerade darum geht. */
+/* Welcher Hinweis passt zur Aufgabe? Zahlen mit Potenzen, Wurzeln oder Logarithmen bleiben stehen,
+   wenn es in der Aufgabe gerade darum geht. */
 function simpHint(g, text){
-  var deriv=/Ableitung/.test(text), powTask=/Potenz|Wurzel|Logarithm/i.test(text);
+  var powTask=/Potenz|Wurzel|Logarithm/i.test(text);
   var list=simp(g).filter(function(h){
-    if(h.k==='factorE') return deriv;
     if(h.k==='number' && powTask && anyNode(h.n, function(m){ return m.t==='pow' || m.t==='fn'; })) return false;
     return true;
   });
@@ -721,20 +710,10 @@ function prepFields(){ FIELDS.forEach(function(el){ if(!el.readOnly){ el.setAttr
 function unprepFields(){ FIELDS.forEach(function(el){ if(el.hasAttribute('data-mbk-ro')){ el.removeAttribute('readonly'); el.removeAttribute('data-mbk-ro'); } el.removeAttribute('inputmode'); el.classList.remove('mbk-act'); }); }
 function sMark(){ FIELDS.forEach(function(el,i){ el.classList.toggle('mbk-act', i===FI && !P.hidden); }); }
 function fieldVal(){ var el=FIELDS[FI]; return el ? String(el.value) : ''; }
-function fieldLabel(el){
-  if(el.id){ var l=D.querySelector('label[for="'+el.id+'"]'); if(l && l.textContent.trim()) return l.textContent.trim(); }
-  var t='', n=el.previousSibling;
-  while(n && !(n.nodeType===1 && /^(INPUT|SELECT|TEXTAREA|BR|P|DIV|TD|TR|TABLE)$/.test(n.tagName))){ t=(n.textContent||'')+t; n=n.previousSibling; }
-  if(!t.trim() && el.parentNode && el.parentNode.tagName==='TD' && el.parentNode.previousElementSibling) t=el.parentNode.previousElementSibling.textContent||'';
-  t=t.replace(/\s+/g,' ').trim();
-  if(t.length>24) t='…'+t.slice(-23);
-  return /[A-Za-z0-9]/.test(t) ? t : (el.placeholder||'');
-}
 function sRender(){
   var el=FIELDS[FI]; if(!el) return;
   sMark();
-  P.querySelector('.mbk-pre').textContent=fieldLabel(el)||(FIELDS.length>1?'Feld '+(FI+1):'');
-  OUT.innerHTML=esc(String(el.value)).replace(/-/g,'−')+'<span class="mbk-c"></span>';
+    OUT.innerHTML=esc(String(el.value)).replace(/-/g,'−')+'<span class="mbk-c"></span>';
   label(); pad();
 }
 function sSet(v){
