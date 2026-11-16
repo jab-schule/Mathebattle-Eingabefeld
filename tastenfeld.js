@@ -9,8 +9,8 @@ function toast(msg){
   D.body.appendChild(t); setTimeout(function(){ t.remove(); },3500);
 }
 if(!inp && !/mathebattle/i.test(location.hostname) && !D.querySelector('#content,.exercise_question')){ toast('Auf dieser Seite gibt es kein Eingabefeld für Mathebattle.'); return; }
-function varOf(el){ var m=/term_check\(\s*["']([^"']*)["']/.exec(el.getAttribute('onkeyup')||''); return m?m[1]:'x'; }
-var VAR=inp?varOf(inp):'x';
+function varOf(el){ var m=/term_check\(\s*["']([^"']*)["']/.exec(el.getAttribute('onkeyup')||''); return m?m[1]:''; }
+var VAR=(inp&&varOf(inp))||'x', VARS=[VAR];
 var DEC=',';
 var MODE='', FIELDS=[], FI=0;
 
@@ -138,6 +138,7 @@ st.textContent=
 '#mbk [hidden]{display:none!important}'+
 '#mbk.simple .mbk-k,#mbk.simple.land .mbk-k{grid-template-columns:repeat(6,1fr);gap:6px;width:100%;max-width:560px;justify-self:center;margin:0 auto}'+
 '#mbk.simple .mbk-f{font-family:-apple-system,system-ui,sans-serif;font-size:21px}'+
+'#mbk .mbk-ks .r1{grid-column-start:1}'+
 'input.mbk-act{outline:3px solid #2F55D4!important;outline-offset:2px}'+
 '#mbk-open{position:fixed;left:0;top:0;transform-origin:0 0;z-index:2147483000;border:0;border-radius:12px;background:#16181D;color:#fff;font:600 15px -apple-system,system-ui,sans-serif;padding:12px 16px;cursor:pointer}'+
 '';
@@ -342,7 +343,8 @@ K.forEach(function(k,ix){
 });
 /* Abgespecktes Tastenfeld für Aufgaben ohne Termfeld (Koordinaten, Zahlenwerte, Lösungsmengen) */
 var KS=[
- ['7','s','7'],['8','s','8'],['9','s','9'],['−','s','-'],[',','s',','],['⌫','sback','','n'],
+ [';','s',';','x semi'],['/','s','/','x slash'],['π','s','pi','x pi'],['ln(','s','ln(','x ln'],['(','s','(','x par'],[')','s',')','x par'],
+ ['7','s','7','r1'],['8','s','8'],['9','s','9'],['−','s','-'],[',','s',','],['⌫','sback','','n'],
  ['4','s','4'],['5','s','5'],['6','s','6'],['‹ Feld','prev','','n fn'],['Feld ›','next','','n fn'],['C','sclear','','n'],
  ['1','s','1'],['2','s','2'],['3','s','3'],['0','s','0'],['Lösen','go','','go']
 ];
@@ -679,7 +681,7 @@ function act(a,v){
   else if(a==='s'){ sSet(fieldVal()+v); return; }
   else if(a==='sback'){ sSet(fieldVal().slice(0,-1)); return; }
   else if(a==='sclear'){ sSet(''); return; }
-  else if(a==='prev'||a==='next'){ if(FIELDS.length){ FI=(FI+(a==='next'?1:FIELDS.length-1))%FIELDS.length; sRender(); } return; }
+  else if(a==='prev'||a==='next'){ refreshFields(); if(FIELDS.length){ FI=(FI+(a==='next'?1:FIELDS.length-1))%FIELDS.length; sRender(); } return; }
   else if(a==='hide'){ toggle(); return; }
   render(); sync(false);
 }
@@ -695,6 +697,30 @@ function toggle(){
   pad();
 }
 
+/* ---------- Variablen: Steht die Variable nicht im Aufruf von term_check (z. B. Terme vereinfachen),
+   werden die Buchstaben aus der Aufgabe gelesen und auf freie Tasten gelegt ---------- */
+var LSLOTS=[15,23,20,22,24,25,26], ORIG={};
+LSLOTS.forEach(function(i){ var b=BTN[i]; ORIG[i]={h:b.innerHTML, a:b.dataset.a, v:b.dataset.v, c:b.className}; });
+function taskVars(){
+  var q=D.querySelector('.exercise_question'); if(!q) return [];
+  var src=q.innerHTML, MJ=W.MathJax;
+  try{ for(var it of MJ.startup.document.math){ if(it.typesetRoot && q.contains(it.typesetRoot) && typeof it.math==='string') src+=it.math; } }catch(e){}
+  var out=[], re=/<mi[^>]*>\s*([a-zA-Z])\s*<\/mi>/g, m;
+  while((m=re.exec(src))){ if(m[1]!=='e' && out.indexOf(m[1])<0) out.push(m[1]); }
+  return out.slice(0, LSLOTS.length);
+}
+function setVars(){
+  var v=varOf(inp);
+  VARS = v ? [v] : taskVars();
+  if(!VARS.length) VARS=['x'];
+  VAR=VARS[0];
+  LSLOTS.forEach(function(ix,k){
+    var b=BTN[ix], o=ORIG[ix];
+    if(k<VARS.length){ b.innerHTML=VARS[k]; b.dataset.a='c'; b.dataset.v=VARS[k]; b.className='v'; }
+    else { b.innerHTML=o.h; b.dataset.a=o.a; b.dataset.v=o.v; b.className=o.c; }
+  });
+}
+
 /* ---------- Abgespecktes Tastenfeld: schreibt in die Textfelder der Aufgabe ---------- */
 function findFields(){
   if(!D.querySelector('.exercise_question')) return [];
@@ -706,18 +732,51 @@ function findFields(){
     var r=el.getBoundingClientRect(); return r.width>0 && r.height>0;
   });
 }
-function prepFields(){ FIELDS.forEach(function(el){ if(!el.readOnly){ el.setAttribute('readonly','readonly'); el.setAttribute('data-mbk-ro','1'); } el.setAttribute('inputmode','none'); }); sMark(); }
-function unprepFields(){ FIELDS.forEach(function(el){ if(el.hasAttribute('data-mbk-ro')){ el.removeAttribute('readonly'); el.removeAttribute('data-mbk-ro'); } el.removeAttribute('inputmode'); el.classList.remove('mbk-act'); }); }
+/* Zahlenfelder nehmen kein einzelnes Minus und kein Komma an, deshalb werden sie solange zu Textfeldern */
+function prepFields(){ FIELDS.forEach(function(el){
+  if(!el.readOnly){ el.setAttribute('readonly','readonly'); el.setAttribute('data-mbk-ro','1'); }
+  if(el.type==='number'){ el.type='text'; el.setAttribute('data-mbk-num','1'); }
+  el.setAttribute('inputmode','none'); }); sMark(); }
+function unprepFields(){ FIELDS.forEach(function(el){
+  if(el.hasAttribute('data-mbk-ro')){ el.removeAttribute('readonly'); el.removeAttribute('data-mbk-ro'); }
+  if(el.hasAttribute('data-mbk-num')){ var v=el.value; el.type='number'; el.removeAttribute('data-mbk-num'); el.value=v; }
+  el.removeAttribute('inputmode'); el.classList.remove('mbk-act'); }); }
+/* Felder neu einsammeln, z. B. wenn bei Extrempunkten die Anzahl geändert wurde und weitere Zeilen erscheinen */
+function refreshFields(){
+  if(MODE!=='simple') return;
+  var cur=FIELDS[FI], nf=findFields(); if(!nf.length) return;
+  var same=nf.length===FIELDS.length && nf.every(function(el,i){ return el===FIELDS[i]; });
+  if(same) return;
+  FIELDS.forEach(function(el){ if(nf.indexOf(el)<0){ el.classList.remove('mbk-act'); } });
+  FIELDS=nf; FI=Math.max(0, nf.indexOf(cur));
+  if(!P.hidden){ prepFields(); sRender(); }
+}
+/* Zusatztasten nur, wenn der Hinweis am Feld danach verlangt */
+function extraKeys(){
+  var el=FIELDS[FI], box=el && (el.form || el.parentNode), t=box ? box.textContent : '';
+  var want={
+    semi:/Semikolon/.test(t),
+    slash:/(Bruch|Brüche)[^.]{0,40}["'„“]?\/|["'„“]\/["'“”]|\d\/\d|\bpi\b|ln\(/.test(t) && !/Brüche können nicht/.test(t),
+    pi:/\bpi\b/.test(t),
+    ln:/ln\(/.test(t)
+  };
+  want.par=want.ln;
+  KBS.querySelectorAll('button.x').forEach(function(b){
+    var k=b.className.replace(/\bx\b/,'').trim(); b.hidden=!want[k];
+  });
+}
 function sMark(){ FIELDS.forEach(function(el,i){ el.classList.toggle('mbk-act', i===FI && !P.hidden); }); }
 function fieldVal(){ var el=FIELDS[FI]; return el ? String(el.value) : ''; }
 function sRender(){
   var el=FIELDS[FI]; if(!el) return;
   sMark();
-    OUT.innerHTML=esc(String(el.value)).replace(/-/g,'−')+'<span class="mbk-c"></span>';
+  extraKeys();
+  OUT.innerHTML=esc(String(el.value)).replace(/-/g,'−').replace(/pi/g,'π')+'<span class="mbk-c"></span>';
   label(); pad();
 }
 function sSet(v){
   var el=FIELDS[FI]; if(!el) return;
+  if(el.hasAttribute('data-mbk-num')) v=v.replace(/,/g,'.');
   el.value=v;
   ['input','keyup','change'].forEach(function(t){
     var e; try{ e=t==='keyup' ? new KeyboardEvent(t,{bubbles:true}) : new Event(t,{bubbles:true}); }catch(x){ e=D.createEvent('Event'); e.initEvent(t,true,true); }
@@ -726,6 +785,7 @@ function sSet(v){
   sRender();
 }
 function goSimple(){
+  refreshFields();
   var el=FIELDS[FI]||FIELDS[0], f=el && el.form; if(!f) return;
   var bs=Array.prototype.slice.call(f.querySelectorAll('input[type=submit],input[type=button],button'));
   var vis=function(b){ return b.getBoundingClientRect().width>0; }, txt=function(b){ return b.value||b.textContent||''; };
@@ -734,7 +794,9 @@ function goSimple(){
   if(b){ b.click(); return; }
   if(f.requestSubmit) f.requestSubmit(); else f.submit();
 }
-D.addEventListener('focusin', function(e){ if(MODE!=='simple') return; var i=FIELDS.indexOf(e.target); if(i>=0 && i!==FI){ FI=i; if(!P.hidden) sRender(); } });
+D.addEventListener('change', function(e){ if(MODE==='simple' && e.target && /^(SELECT|INPUT)$/.test(e.target.tagName) && FIELDS.indexOf(e.target)<0) setTimeout(refreshFields,0); }, true);
+D.addEventListener('click', function(e){ if(MODE==='simple' && !(e.target.closest && e.target.closest('[data-mbk]'))) setTimeout(refreshFields,0); }, true);
+D.addEventListener('focusin', function(e){ if(MODE!=='simple') return; if(FIELDS.indexOf(e.target)<0) refreshFields(); var i=FIELDS.indexOf(e.target); if(i>=0 && i!==FI){ FI=i; if(!P.hidden) sRender(); } });
 
 /* ---------- Seitenwechsel ohne Neuladen, damit das Tastenfeld bleibt ---------- */
 var origSubmit=HTMLFormElement.prototype.submit, busy=false;
@@ -776,7 +838,7 @@ function swap(html){
     old.parentNode.replaceChild(s, old);
   });
   attach();
-  try{ if(W.MathJax && MathJax.typesetPromise){ if(MathJax.startup && MathJax.startup.document) MathJax.startup.document.clear(); MathJax.typesetPromise().then(function(){ label(); }); } }catch(e){}
+  try{ if(W.MathJax && MathJax.typesetPromise){ if(MathJax.startup && MathJax.startup.document) MathJax.startup.document.clear(); MathJax.typesetPromise().then(function(){ label(); if(MODE==='term') setVars(); }); } }catch(e){}
 }
 function attach(){
   tablet();
@@ -789,8 +851,7 @@ function attach(){
   if(!MODE){ P.hidden=true; OPEN.hidden=true; pad(); label(); return false; }
   P.hidden=userHidden; OPEN.hidden=!userHidden;
   if(MODE==='term'){
-    VAR=varOf(inp);
-    var vb=BTN[15]; vb.innerHTML=VAR; vb.dataset.v=VAR;
+    setVars();
     if(!userHidden) prep(); prefix(); clearAll(); render();
     hookAll();
   } else {
@@ -843,7 +904,7 @@ D.addEventListener('keydown',function(e){
   if(!inp) return;
   var t=e.target; if(t && t!==inp && (t.tagName==='INPUT'||t.tagName==='TEXTAREA')) return;
   var k=e.key, map={'+':'+','-':'-','*':'\\cdot',',':',','.':','};
-  map[VAR]=VAR;
+  VARS.forEach(function(v){ map[v]=v; });
   var a=null,v='';
   if(/^[0-9]$/.test(k)){ a='c'; v=k; }
   else if(map[k]){ a='c'; v=map[k]; }
