@@ -139,6 +139,7 @@ st.textContent=
 '#mbk.simple .mbk-k,#mbk.simple.land .mbk-k{grid-template-columns:repeat(6,1fr);gap:6px;width:100%;max-width:560px;justify-self:center;margin:0 auto}'+
 '#mbk.simple .mbk-f{font-family:-apple-system,system-ui,sans-serif;font-size:21px}'+
 '#mbk .mbk-ks .r1{grid-column-start:1}'+
+'#mbk.simple.land .mbk-in{max-width:560px}'+
 'input.mbk-act{outline:3px solid #2F55D4!important;outline-offset:2px}'+
 '#mbk-open{position:fixed;left:0;top:0;transform-origin:0 0;z-index:2147483000;border:0;border-radius:12px;background:#16181D;color:#fff;font:600 15px -apple-system,system-ui,sans-serif;padding:12px 16px;cursor:pointer}'+
 '';
