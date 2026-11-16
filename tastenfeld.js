@@ -679,7 +679,7 @@ function act(a,v){
   else if(a==='clear') clearAll();
   else if(a==='go'){ if(MODE==='simple') goSimple(); else go(); return; }
   else if(a==='s'){ sSet(fieldVal()+v); return; }
-  else if(a==='sback'){ sSet(fieldVal().slice(0,-1)); return; }
+  else if(a==='sback'){ var fv=fieldVal(); sSet(fv.slice(0, /ln\($/.test(fv)?-3:/pi$/.test(fv)?-2:-1)); return; }
   else if(a==='sclear'){ sSet(''); return; }
   else if(a==='prev'||a==='next'){ refreshFields(); if(FIELDS.length){ FI=(FI+(a==='next'?1:FIELDS.length-1))%FIELDS.length; sRender(); } return; }
   else if(a==='hide'){ toggle(); return; }
