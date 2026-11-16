@@ -8,11 +8,11 @@ function toast(msg){
   t.style.cssText='position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:2147483001;background:#16181D;color:#fff;font:15px -apple-system,system-ui,sans-serif;padding:12px 16px;border-radius:10px;max-width:90vw;text-align:center';
   D.body.appendChild(t); setTimeout(function(){ t.remove(); },3500);
 }
-if(!inp && !/mathebattle/i.test(location.hostname) && !D.getElementById('content')){ toast('Auf dieser Seite gibt es kein Eingabefeld für einen Term.'); return; }
-if(!inp) toast('Das Tastenfeld erscheint, sobald du eine Aufgabe öffnest.');
+if(!inp && !/mathebattle/i.test(location.hostname) && !D.querySelector('#content,.exercise_question')){ toast('Auf dieser Seite gibt es kein Eingabefeld für Mathebattle.'); return; }
 function varOf(el){ var m=/term_check\(\s*["']([^"']*)["']/.exec(el.getAttribute('onkeyup')||''); return m?m[1]:'x'; }
 var VAR=inp?varOf(inp):'x';
 var DEC=',';
+var MODE='', FIELDS=[], FI=0;
 
 /* ---------- Eingabe-Modell: Zeichen, Klammern, Brüche, Hochzahlen, Funktionen ---------- */
 var KIDS={paren:1,frac:2,pow:1,fn:1};
@@ -136,6 +136,11 @@ st.textContent=
 '#mbk .mbk-k .n{color:#6B717C}'+
 '#mbk .mbk-k .fn{font-size:15px}'+
 '#mbk .mbk-k .go{grid-column:span 2;background:#16181D;color:#fff;font-weight:600;font-size:16px}'+
+'#mbk [hidden]{display:none!important}'+
+'#mbk.simple .mbk-k,#mbk.simple.land .mbk-k{grid-template-columns:repeat(6,1fr);gap:6px;width:100%;max-width:560px;justify-self:center;margin:0 auto}'+
+'#mbk.simple .mbk-f{font-family:-apple-system,system-ui,sans-serif;font-size:21px}'+
+'#mbk.simple .mbk-f .mbk-pre{font-style:normal;font-size:16px}'+
+'input.mbk-act{outline:3px solid #2F55D4!important;outline-offset:2px}'+
 '#mbk-open{position:fixed;left:0;top:0;transform-origin:0 0;z-index:2147483000;border:0;border-radius:12px;background:#16181D;color:#fff;font:600 15px -apple-system,system-ui,sans-serif;padding:12px 16px;cursor:pointer}'+
 '';
 D.head.appendChild(st);
@@ -337,6 +342,22 @@ K.forEach(function(k,ix){
   if(k[1]==='back') b.setAttribute('aria-label','Löschen');
   KB.appendChild(b);
 });
+/* Abgespecktes Tastenfeld für Aufgaben ohne Termfeld (Koordinaten, Zahlenwerte, Lösungsmengen) */
+var KS=[
+ ['7','s','7'],['8','s','8'],['9','s','9'],['−','s','-'],[',','s',','],['⌫','sback','','n'],
+ ['4','s','4'],['5','s','5'],['6','s','6'],['‹ Feld','prev','','n fn'],['Feld ›','next','','n fn'],['C','sclear','','n'],
+ ['1','s','1'],['2','s','2'],['3','s','3'],['0','s','0'],['Lösen','go','','go']
+];
+var KBS=D.createElement('div'); KBS.className='mbk-k mbk-ks'; KBS.hidden=true; KB.after(KBS);
+KS.forEach(function(k){
+  var b=D.createElement('button'); b.type='button'; b.innerHTML=k[0];
+  b.dataset.a=k[1]; b.dataset.v=k[2]; if(k[3]) b.className=k[3];
+  if(k[1]==='sclear') b.setAttribute('aria-label','Feld leeren');
+  if(k[1]==='sback') b.setAttribute('aria-label','Löschen');
+  if(k[1]==='prev') b.setAttribute('aria-label','Vorheriges Feld');
+  if(k[1]==='next') b.setAttribute('aria-label','Nächstes Feld');
+  KBS.appendChild(b);
+});
 /* Reihenfolge im Querformat: drei Reihen zu je zehn Tasten */
 var LAND=[0,1,2,3,4,9,10,11,17,5, 6,7,8,15,16,20,21,22,23,27, 12,13,14,18,19,24,25,26,28];
 var PORT=K.map(function(_,i){ return i; });
@@ -390,10 +411,9 @@ function sync(now){
 function msg(t,kind,isHtml){ if(isHtml) MSG.innerHTML=t||''; else MSG.textContent=t||''; MSG.className='mbk-msg'+(kind==='hint'?' hint':kind?' err':''); if(t){ MSG.style.animation='none'; void MSG.offsetWidth; MSG.style.animation=''; } pad(); }
 function render(){ OUT.innerHTML=html(root,true)||'<span class="mbk-c"></span>'; pad(); }
 
-/* ================= Prüfung bei Ableitungsaufgaben =================
-   Bis zu MAX_TRIES Versuche: Falsche Antworten werden vorher abgefangen, erst der letzte Versuch geht ungeprüft an Mathebattle.
-   Richtige, aber nicht vereinfachte Antworten bekommen einen Hinweis und kosten keinen Versuch. */
-var MAX_TRIES=3;
+/* ================= Hinweise zum Vereinfachen =================
+   Nur bei Aufgaben mit Termfeld. Ob die Antwort stimmt, entscheidet allein Mathebattle.
+   Ist der Term noch nicht vereinfacht, kommt einmal ein Hinweis. Wer danach unverändert erneut löst, gibt so ab. */
 var FUNCS={sin:Math.sin,cos:Math.cos,tan:Math.tan,ln:Math.log,lg:Math.log10,log:Math.log10,wu:Math.sqrt,sqrt:Math.sqrt,exp:Math.exp};
 function tokens(s){
   var out=[], i=0, m;
@@ -478,25 +498,6 @@ function ev(n,x){
   }
   return NaN;
 }
-var PTS=[-2.3,-1.9,-1.45,-1.1,-0.7,-0.35,0.15,0.45,0.85,1.2,1.55,1.95,2.35];
-function deriv(f,x){
-  var h=1e-3*(1+Math.abs(x)), D=function(h){ return (ev(f,x+h)-ev(f,x-h))/(2*h); };
-  return (4*D(h/2)-D(h))/3;
-}
-var close=function(a,b){ return Math.abs(a-b)<=1e-6*Math.max(1,Math.abs(a),Math.abs(b)); };
-function judge(f,g){
-  var P=[];
-  PTS.forEach(function(x){ var fv=ev(f,x), d=deriv(f,x), gv=ev(g,x); if(isFinite(fv)&&isFinite(d)&&isFinite(gv)) P.push({f:fv,d:d,g:gv}); });
-  if(P.length<3) return {kind:'nan'};
-  if(P.every(function(q){ return close(q.g,q.d); })) return {kind:'ok'};
-  var m='Das stimmt noch nicht.';
-  if(P.every(function(q){ return close(q.g,-q.d); })) m='Das stimmt noch nicht. Bis auf das Vorzeichen passt es, prüf die Minuszeichen.';
-  else if(P.every(function(q){ return close(q.g,q.f); })) m='Das ist noch f(x) selbst. Leite den Term ab.';
-  else { var R=P.filter(function(q){ return Math.abs(q.d)>1e-9; }).map(function(q){ return q.g/q.d; });
-    if(R.length>=3 && R.every(function(r){ return close(r,R[0]); }) && !close(R[0],0)) m='Das stimmt noch nicht. Ein Faktor fehlt oder ist zu viel. Hast du an die innere Ableitung gedacht?'; }
-  return {kind:'wrong', msg:m};
-}
-
 /* Vereinfacht? Liefert '' oder einen Grund */
 function isInt(n){ return n.t==='num' && Number.isInteger(n.v); }
 function numLit(n){ if(n.t==='num') return true; if(n.t==='neg') return numLit(n.a); if(n.t==='div') return isInt(n.a)&&isInt(n.b); return false; }
@@ -518,10 +519,9 @@ function fp(n){ return FP.map(function(x){ var v=ev(n,x); return isFinite(v)?v.t
 function isE(n){ return n.t==='pow' && n.b.t==='con' && n.b.v==='e' || n.t==='fn' && n.f==='exp'; }
 function eExp(n){ return n.t==='pow' ? n.e : n.a; }
 function simp(n){
-  var r='';
-  function bad(x,node){ if(!r) r={k:x, n:node}; }
+  var r=[];
+  function bad(x,node){ r.push({k:x, n:node}); }
   (function walk(m){
-    if(r) return;
     if(!hasVar(m) && !hasCon(m) && !numLit(m) && m.t!=='fn'){ bad('number', m); return; }
     switch(m.t){
       case 'num': return;
@@ -579,83 +579,43 @@ function astHtml(n){
   return '';
 }
 function hintHtml(s){
-  if(s.k==='number') return 'Richtig abgeleitet. Fasse <span class="mbk-m">'+astHtml(s.n)+'</span> noch zu einer Zahl zusammen.';
+  if(s.k==='number') return 'Fasse <span class="mbk-m">'+astHtml(s.n)+'</span> noch zu einer Zahl zusammen.';
   return HINTS[s.k];
 }
 var HINTS={
-  signs:'Richtig abgeleitet. Fasse die Minuszeichen noch zusammen.',
-  reduce:'Richtig abgeleitet. Kürze noch den Bruch.',
-  neutral:'Richtig abgeleitet. Lass Faktoren 1, Summanden 0 und Hochzahlen 1 weg.',
-  combinePow:'Richtig abgeleitet. Fasse gleiche Faktoren zu einer Potenz zusammen.',
-  combine:'Richtig abgeleitet. Fasse noch gleichartige Terme zusammen.',
-  factorE:'Richtig abgeleitet. Klammere jetzt noch den e-Term aus.'
+  signs:'Fasse die Minuszeichen noch zusammen.',
+  reduce:'Kürze noch den Bruch.',
+  neutral:'Lass Faktoren 1, Summanden 0 und Hochzahlen 1 weg.',
+  combinePow:'Fasse gleiche Faktoren zu einer Potenz zusammen.',
+  combine:'Fasse noch gleichartige Terme zusammen.',
+  factorE:'Klammere noch den e-Term aus.'
 };
-
-/* Aufgabe von der Seite lesen: MathML aus MathJax, in Text umwandeln, rechte Seite nach "=" nehmen */
-function mmlText(node){
-  if(node.nodeType===3) return '';
-  var tag=(node.localName||'').toLowerCase(), kids=Array.prototype.slice.call(node.childNodes).filter(function(c){ return c.nodeType===1; });
-  var txt=(node.textContent||'').trim(), all=function(){ return kids.map(mmlText).join(' '); };
-  switch(tag){
-    case 'mn': return ' '+txt+' ';
-    case 'mi': if(/^[⋅·×]$/.test(txt)) return '*'; return ' '+txt+' ';
-    case 'mo': if(/^[−\-]$/.test(txt)) return '-'; if(/^[⋅·×*]$/.test(txt)) return '*'; if(/^[÷:\/]$/.test(txt)) return '/';
-      if(/^[+=()\[\]]$/.test(txt)) return txt; if(txt==='⁢') return '*'; return ' ';
-    case 'mtext': return ' '+txt+' ';
-    case 'msup': return '('+mmlText(kids[0])+')^('+mmlText(kids[1])+')';
-    case 'msub': return mmlText(kids[0]);
-    case 'mfrac': return '(('+mmlText(kids[0])+')/('+mmlText(kids[1])+'))';
-    case 'msqrt': return 'wu('+all()+')';
-    case 'mroot': return '(('+mmlText(kids[0])+')^(1/('+mmlText(kids[1])+')))';
-    case 'mfenced': return '('+all()+')';
-    case 'semantics': return kids.length?mmlText(kids[0]):'';
-    case 'annotation': case 'annotation-xml': case 'mphantom': return '';
-    default: return all();
+function anyNode(n,pred){
+  if(!n) return false; if(pred(n)) return true;
+  switch(n.t){
+    case 'neg': case 'fn': return anyNode(n.a,pred);
+    case 'add': return n.items.some(function(i){ return anyNode(i.n,pred); });
+    case 'mul': return n.fs.some(function(f){ return anyNode(f,pred); });
+    case 'div': return anyNode(n.a,pred)||anyNode(n.b,pred);
+    case 'pow': return anyNode(n.b,pred)||anyNode(n.e,pred);
   }
+  return false;
 }
-function taskF(){
-  var q=D.querySelector('.exercise_question'), MJ=W.MathJax;
-  if(!q || !MJ || !MJ.startup || !MJ.startup.document) return null;
-  var text=q.textContent||'';
-  if(!/Ableitung/.test(text) || /\d+\s*-?\s*te\s+Ableitung|zweite|dritte|höhere/i.test(text)) return null;
-  if(!/^f'\(/.test(((inp.previousSibling||{}).textContent||'').trim())) return null;
-  var parts=[];
-  try{
-    var list=MJ.startup.document.math, arr=[];
-    if(list && typeof list[Symbol.iterator]==='function'){ for(var it of list) arr.push(it); }
-    arr.forEach(function(it){
-      var r=it.typesetRoot; if(!r || !q.contains(r)) return;
-      var s=null; try{ s=MJ.startup.toMML(it.root); }catch(e){}
-      if(!s && typeof it.math==='string') s=it.math;
-      if(s){ var dn=new DOMParser().parseFromString(s.replace(/xmlns="[^"]*"/,''),'text/html').querySelector('math'); if(dn) parts.push(mmlText(dn)); }
-    });
-  }catch(e){ return null; }
-  var all=parts.join(' '), i=all.lastIndexOf('=');
-  if(i<0) return null;
-  try{ return parseExpr(all.slice(i+1), VAR); }catch(e){ return null; }
+function taskText(){ var q=D.querySelector('.exercise_question'); return q?(q.textContent||''):''; }
+/* Welcher Hinweis passt zur Aufgabe? Ausklammern nur bei Ableitungen, Zahlen mit Potenzen, Wurzeln oder Logarithmen
+   bleiben stehen, wenn es in der Aufgabe gerade darum geht. */
+function simpHint(g, text){
+  var deriv=/Ableitung/.test(text), powTask=/Potenz|Wurzel|Logarithm/i.test(text);
+  var list=simp(g).filter(function(h){
+    if(h.k==='factorE') return deriv;
+    if(h.k==='number' && powTask && anyNode(h.n, function(m){ return m.t==='pow' || m.t==='fn'; })) return false;
+    return true;
+  });
+  return list[0]||null;
 }
-/* Die Aufgabe wird einmal gelesen und gemerkt. Mathebattle setzt bei jeder Vorschau die Formeldarstellung neu auf,
-   danach ist sie kurz nicht lesbar. */
-var TASK=null;
-function currentTask(){
-  var key=(inp && inp.form && inp.form.action)||location.href;
-  if(TASK && TASK.key===key) return TASK.f;
-  var f=taskF(); if(f) TASK={key:key, f:f};
-  return f;
-}
-/* Versuche pro Aufgabe: Im Training ist die Formularadresse für alle Aufgaben gleich, deshalb gehört die Aufgabe selbst mit in den Schlüssel */
-function triesKey(){ var f=currentTask(); return 'mbk-tries:'+((inp && inp.form && inp.form.action)||location.pathname)+(f?':'+fp(f):''); }
-function getTries(){ try{ return +localStorage.getItem(triesKey())||0; }catch(e){ return 0; } }
-function setTries(n){ try{ localStorage.setItem(triesKey(), String(n)); }catch(e){} }
 var LABEL=P.querySelector('.mbk-top span');
-var labelTimer=null;
-function label(tries){
-  var f=inp && currentTask();
-  clearTimeout(labelTimer);
-  tries=tries||0;
-  var q=D.querySelector('.exercise_question');
-  if(inp && !f && tries<20 && q && /Ableitung/.test(q.textContent||'')) labelTimer=setTimeout(function(){ label(tries+1); },300);
-  LABEL.textContent = f && MAX_TRIES>1 ? 'Ableitung · Versuch '+Math.min(MAX_TRIES,getTries()+1)+' von '+MAX_TRIES : 'Tastenfeld für Mathebattle';
+function label(){
+  LABEL.textContent = MODE==='simple' && FIELDS.length>1 ? 'Feld '+(FI+1)+' von '+FIELDS.length : 'Tastenfeld für Mathebattle';
 }
 var bypass=false;
 /* Gehört dieses Formular zur Antwort? */
@@ -686,21 +646,16 @@ function realSubmit(){
   try{ if(typeof W.form_submit==='function') W.form_submit(); else if(inp.form) inp.form.submit(); }
   finally{ bypass=false; }
 }
-/* Prüft die Eingabe im Mathebattle-Feld. true heißt: abschicken. */
+/* Prüft vor dem Abschicken, ob der Term vereinfacht ist. true heißt: abschicken. */
+var hinted='';
 function guard(){
+  if(MODE!=='term' || !inp || P.hidden) return true;
   var nw=D.getElementById('no_wertung'); if(nw && nw.value==='1') return true;
-  if(MAX_TRIES<2) return true;
-  var f=currentTask(); if(!f) return true;
-  var g; try{ g=parseExpr(inp.value, VAR); }catch(e){ return true; }
-  var res=judge(f,g);
-  if(res.kind==='ok'){ var s=simp(g); if(s){ msg(hintHtml(s),'hint',true); return false; } return true; }
-  if(res.kind!=='wrong') return true;
-  var n=getTries();
-  if(n>=MAX_TRIES-1) return true;
-  n++; setTries(n); label();
-  var left=MAX_TRIES-n;
-  msg(res.msg+' '+(left===1 ? 'Noch 1 Versuch, dann wertet Mathebattle direkt.' : 'Noch '+left+' Versuche.'), true);
-  if(P.hidden) toggle();
+  var v=inp.value; if(!v || v===hinted) return true;
+  var g; try{ g=parseExpr(v, VAR); }catch(e){ return true; }
+  var h=simpHint(g, taskText()); if(!h) return true;
+  hinted=v;
+  msg(hintHtml(h)+' Wenn du so abgeben willst, tippe noch einmal auf Lösen.','hint',true);
   return false;
 }
 
@@ -731,7 +686,11 @@ function act(a,v){
   else if(a==='right') right();
   else if(a==='back') back();
   else if(a==='clear') clearAll();
-  else if(a==='go'){ go(); return; }
+  else if(a==='go'){ if(MODE==='simple') goSimple(); else go(); return; }
+  else if(a==='s'){ sSet(fieldVal()+v); return; }
+  else if(a==='sback'){ sSet(fieldVal().slice(0,-1)); return; }
+  else if(a==='sclear'){ sSet(''); return; }
+  else if(a==='prev'||a==='next'){ if(FIELDS.length){ FI=(FI+(a==='next'?1:FIELDS.length-1))%FIELDS.length; sRender(); } return; }
   else if(a==='hide'){ toggle(); return; }
   render(); sync(false);
 }
@@ -739,12 +698,64 @@ P.addEventListener('click',function(e){ var b=e.target.closest('button'); if(b &
 OPEN.addEventListener('click',function(){ toggle(); });
 var userHidden=false;
 function toggle(){
-  if(!inp) return;
+  if(!MODE) return;
   P.hidden=!P.hidden; OPEN.hidden=!P.hidden; userHidden=P.hidden;
-  if(P.hidden){ inp.removeAttribute('readonly'); inp.removeAttribute('inputmode'); }
+  if(MODE==='simple'){ if(P.hidden) unprepFields(); else { prepFields(); sRender(); } }
+  else if(P.hidden){ inp.removeAttribute('readonly'); inp.removeAttribute('inputmode'); }
   else { prep(); clearAll(); render(); inp.value=''; sync(true); }
   pad();
 }
+
+/* ---------- Abgespecktes Tastenfeld: schreibt in die Textfelder der Aufgabe ---------- */
+function findFields(){
+  if(!D.querySelector('.exercise_question')) return [];
+  var box=D.getElementById('content')||D;
+  return Array.prototype.slice.call(box.querySelectorAll('form input')).filter(function(el){
+    var t=(el.getAttribute('type')||'text').toLowerCase();
+    if(['text','tel','number',''].indexOf(t)<0 || el.disabled || el.closest('[data-mbk]')) return false;
+    if(el.readOnly && !el.hasAttribute('data-mbk-ro')) return false;
+    var r=el.getBoundingClientRect(); return r.width>0 && r.height>0;
+  });
+}
+function prepFields(){ FIELDS.forEach(function(el){ if(!el.readOnly){ el.setAttribute('readonly','readonly'); el.setAttribute('data-mbk-ro','1'); } el.setAttribute('inputmode','none'); }); sMark(); }
+function unprepFields(){ FIELDS.forEach(function(el){ if(el.hasAttribute('data-mbk-ro')){ el.removeAttribute('readonly'); el.removeAttribute('data-mbk-ro'); } el.removeAttribute('inputmode'); el.classList.remove('mbk-act'); }); }
+function sMark(){ FIELDS.forEach(function(el,i){ el.classList.toggle('mbk-act', i===FI && !P.hidden); }); }
+function fieldVal(){ var el=FIELDS[FI]; return el ? String(el.value) : ''; }
+function fieldLabel(el){
+  if(el.id){ var l=D.querySelector('label[for="'+el.id+'"]'); if(l && l.textContent.trim()) return l.textContent.trim(); }
+  var t='', n=el.previousSibling;
+  while(n && !(n.nodeType===1 && /^(INPUT|SELECT|TEXTAREA|BR|P|DIV|TD|TR|TABLE)$/.test(n.tagName))){ t=(n.textContent||'')+t; n=n.previousSibling; }
+  if(!t.trim() && el.parentNode && el.parentNode.tagName==='TD' && el.parentNode.previousElementSibling) t=el.parentNode.previousElementSibling.textContent||'';
+  t=t.replace(/\s+/g,' ').trim();
+  if(t.length>24) t='…'+t.slice(-23);
+  return /[A-Za-z0-9]/.test(t) ? t : (el.placeholder||'');
+}
+function sRender(){
+  var el=FIELDS[FI]; if(!el) return;
+  sMark();
+  P.querySelector('.mbk-pre').textContent=fieldLabel(el)||(FIELDS.length>1?'Feld '+(FI+1):'');
+  OUT.innerHTML=esc(String(el.value)).replace(/-/g,'−')+'<span class="mbk-c"></span>';
+  label(); pad();
+}
+function sSet(v){
+  var el=FIELDS[FI]; if(!el) return;
+  el.value=v;
+  ['input','keyup','change'].forEach(function(t){
+    var e; try{ e=t==='keyup' ? new KeyboardEvent(t,{bubbles:true}) : new Event(t,{bubbles:true}); }catch(x){ e=D.createEvent('Event'); e.initEvent(t,true,true); }
+    el.dispatchEvent(e);
+  });
+  sRender();
+}
+function goSimple(){
+  var el=FIELDS[FI]||FIELDS[0], f=el && el.form; if(!f) return;
+  var bs=Array.prototype.slice.call(f.querySelectorAll('input[type=submit],input[type=button],button'));
+  var vis=function(b){ return b.getBoundingClientRect().width>0; }, txt=function(b){ return b.value||b.textContent||''; };
+  var b=bs.filter(vis).filter(function(b){ return /lösen|prüf|antwort|abschick|^\s*ok\s*$/i.test(txt(b)); })[0]
+     || bs.filter(function(b){ return b.type==='submit'; })[0];
+  if(b){ b.click(); return; }
+  if(f.requestSubmit) f.requestSubmit(); else f.submit();
+}
+D.addEventListener('focusin', function(e){ if(MODE!=='simple') return; var i=FIELDS.indexOf(e.target); if(i>=0 && i!==FI){ FI=i; if(!P.hidden) sRender(); } });
 
 /* ---------- Seitenwechsel ohne Neuladen, damit das Tastenfeld bleibt ---------- */
 var origSubmit=HTMLFormElement.prototype.submit, busy=false;
@@ -790,15 +801,25 @@ function swap(html){
 }
 function attach(){
   tablet();
-  inp=D.getElementById('term_input'); TASK=null;
+  inp=D.getElementById('term_input'); hinted='';
+  FIELDS=[]; FI=0; MODE='';
   msg('');
-  if(!inp){ P.hidden=true; OPEN.hidden=true; pad(); return; }
-  VAR=varOf(inp);
-  var vb=BTN[15]; vb.innerHTML=VAR; vb.dataset.v=VAR;
-  if(!userHidden) prep(); prefix(); clearAll(); render();
-  P.hidden=userHidden; OPEN.hidden=!userHidden; pad();
-  hookAll();
-  if(W.MathJax && MathJax.startup && MathJax.startup.promise) MathJax.startup.promise.then(function(){ setTimeout(label,50); }); else label();
+  if(inp) MODE='term';
+  else { FIELDS=findFields(); if(FIELDS.length) MODE='simple'; }
+  P.classList.toggle('simple', MODE==='simple'); KB.hidden=MODE!=='term'; KBS.hidden=MODE!=='simple';
+  if(!MODE){ P.hidden=true; OPEN.hidden=true; pad(); label(); return false; }
+  P.hidden=userHidden; OPEN.hidden=!userHidden;
+  if(MODE==='term'){
+    VAR=varOf(inp);
+    var vb=BTN[15]; vb.innerHTML=VAR; vb.dataset.v=VAR;
+    if(!userHidden) prep(); prefix(); clearAll(); render();
+    hookAll();
+  } else {
+    if(!userHidden) prepFields();
+    sRender();
+  }
+  pad(); label();
+  return true;
 }
 HTMLFormElement.prototype.submit=function(){
   var f=this, m=(f.method||'get').toLowerCase(), a=f.action||location.href;
@@ -828,6 +849,18 @@ W.addEventListener('popstate', function(){ load(location.href, null, null, false
 
 D.addEventListener('keydown',function(e){
   if(P.hidden || e.metaKey || e.ctrlKey || e.altKey) return;
+  if(MODE==='simple'){
+    var tg=e.target; if(tg && FIELDS.indexOf(tg)<0 && (tg.tagName==='INPUT'||tg.tagName==='TEXTAREA')) return;
+    var ky=e.key, sa=null, sv='';
+    if(/^[0-9]$/.test(ky)){ sa='s'; sv=ky; }
+    else if(ky==='-'){ sa='s'; sv='-'; }
+    else if(ky===','||ky==='.'){ sa='s'; sv=','; }
+    else if(ky==='Backspace') sa='sback';
+    else if(ky==='Enter') sa='go';
+    else if(ky==='Tab') sa=e.shiftKey?'prev':'next';
+    if(!sa) return;
+    e.preventDefault(); e.stopPropagation(); act(sa,sv); return;
+  }
   if(!inp) return;
   var t=e.target; if(t && t!==inp && (t.tagName==='INPUT'||t.tagName==='TEXTAREA')) return;
   var k=e.key, map={'+':'+','-':'-','*':'\\cdot',',':',','.':','};
@@ -848,7 +881,7 @@ D.addEventListener('keydown',function(e){
   e.preventDefault(); e.stopPropagation(); act(a,v);
 },true);
 
-W.__mbk={toggle:toggle, _t:{parseExpr:parseExpr, judge:judge, simp:simp, hint:function(s){ return hintHtml(s); }, taskF:function(){ return taskF(); }, task:function(){ return currentTask(); }}};
-render(); fit(); label(); hookAll();
-if(!inp) attach();
+W.__mbk={toggle:toggle, _t:{parseExpr:parseExpr, simp:simp, simpHint:simpHint, hint:function(s){ return hintHtml(s); }, mode:function(){ return MODE; }}};
+render(); fit(); hookAll();
+if(!attach()) toast('Das Tastenfeld erscheint, sobald du eine Aufgabe öffnest.');
 })();
